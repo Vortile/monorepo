@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { MessageCircle, CheckCircle2, ExternalLink } from "lucide-react";
-import { NavigationButtons } from "./navigation-buttons";
+import { StepLayout } from "./step-layout";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Label } from "@/components/ui/label";
+import { Typography } from "@/components/ui/typography";
 
 interface WhatsappStepProps {
   storeData: {
@@ -24,6 +27,7 @@ export const WhatsappStep = ({
 }: WhatsappStepProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState(storeData.phone);
 
   const handleConnect = () => {
     setIsLoading(true);
@@ -34,17 +38,38 @@ export const WhatsappStep = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">Conecte WhatsApp</h2>
-        <p className="text-muted-foreground">
+    <StepLayout
+      title="Conecte WhatsApp"
+      description={
+        <>
           Conecte a conta WhatsApp Business para sua loja{" "}
           <strong>{storeData.name}</strong>
-        </p>
-      </div>
-
+        </>
+      }
+      onBack={!isConnected ? onBack : undefined}
+      onNext={!isConnected ? handleConnect : onNext}
+      nextLabel={!isConnected ? "Conectar WhatsApp Business" : "Concluir"}
+      isNextLoading={!isConnected ? isLoading : isSubmitting}
+      showBack={!isConnected}
+    >
       {!isConnected ? (
         <div className="space-y-6">
+          {/* Phone Input */}
+          <div className="space-y-3">
+            <Label htmlFor="whatsapp-phone" className="text-base font-semibold">
+              Número do WhatsApp Business
+            </Label>
+            <PhoneInput
+              id="whatsapp-phone"
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+            />
+            <Typography variant="muted" className="text-xs">
+              Insira o número que seus clientes usarão para entrar em contato
+              com sua loja
+            </Typography>
+          </div>
+
           {/* Info Card */}
           <Card className="p-6 bg-primary/5 border-primary/20">
             <div className="space-y-4">
@@ -74,16 +99,9 @@ export const WhatsappStep = ({
             </div>
           </Card>
 
-          <NavigationButtons
-            onBack={onBack}
-            onNext={handleConnect}
-            nextLabel="Conectar WhatsApp Business"
-            isNextLoading={isLoading}
-          />
-
-          <p className="text-xs text-muted-foreground text-center">
+          <Typography variant="muted" className="text-xs text-center">
             Você será redirecionado para a Gupshup para autorizar a conexão
-          </p>
+          </Typography>
         </div>
       ) : (
         <div className="space-y-6">
@@ -104,40 +122,42 @@ export const WhatsappStep = ({
 
           {/* Store Details */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Detalhes da Loja</h3>
+            <Typography variant="h3" className="text-lg">
+              Detalhes da Loja
+            </Typography>
             <div className="space-y-3">
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground">Nome da Loja</p>
-                <p className="text-sm font-medium text-foreground">
+                <Typography variant="muted" className="text-xs">
+                  Nome da Loja
+                </Typography>
+                <Typography variant="small" className="font-medium">
                   {storeData.name}
-                </p>
+                </Typography>
               </div>
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground">
+                <Typography variant="muted" className="text-xs">
                   Telefone de Suporte
-                </p>
-                <p className="text-sm font-medium text-foreground">
-                  {storeData.phone}
-                </p>
+                </Typography>
+                <Typography variant="small" className="font-medium">
+                  {phoneNumber}
+                </Typography>
               </div>
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground">URL da Loja</p>
-                <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Typography variant="muted" className="text-xs">
+                  URL da Loja
+                </Typography>
+                <Typography
+                  variant="small"
+                  className="font-medium flex items-center gap-2"
+                >
                   vortile.com/loja/{storeData.slug}
                   <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                </p>
+                </Typography>
               </div>
             </div>
           </div>
-
-          <NavigationButtons
-            onBack={onBack}
-            onNext={onNext}
-            nextLabel="Concluir"
-            isNextLoading={isSubmitting}
-          />
         </div>
       )}
-    </div>
+    </StepLayout>
   );
 };

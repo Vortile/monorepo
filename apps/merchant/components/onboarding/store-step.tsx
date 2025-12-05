@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NavigationButtons } from "./navigation-buttons";
+import { StepLayout } from "./step-layout";
 
 interface StoreStepProps {
   initialData: {
@@ -43,16 +43,14 @@ export const StoreStep = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
-          Sua Primeira Loja
-        </h2>
-        <p className="text-muted-foreground">
-          Esta será a localização onde seus clientes interagirão com você
-        </p>
-      </div>
-
+    <StepLayout
+      title="Sua Primeira Loja"
+      description="Esta será a localização onde seus clientes interagirão com você"
+      onBack={onBack}
+      onNext={handleNext}
+      isNextDisabled={!name || !phone}
+      isNextLoading={isLoading}
+    >
       {/* Store Name */}
       <div className="space-y-3">
         <Label htmlFor="store-name" className="text-base font-semibold">
@@ -100,13 +98,6 @@ export const StoreStep = ({
           O número que seus clientes usarão para entrar em contato
         </p>
       </div>
-
-      <NavigationButtons
-        onBack={onBack}
-        onNext={handleNext}
-        isNextDisabled={!name || !phone}
-        isNextLoading={isLoading}
-      />
-    </div>
+    </StepLayout>
   );
 };

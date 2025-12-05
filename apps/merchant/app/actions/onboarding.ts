@@ -1,8 +1,19 @@
 "use server";
 
-import { db, merchant, store } from "@vortile/database";
+import { db, merchant, store, eq } from "@vortile/database";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+
+export const checkMerchantStatus = async () => {
+  const user = await currentUser();
+  if (!user) return false;
+
+  const existingMerchant = await db.query.merchant.findFirst({
+    where: eq(merchant.clerkId, user.id),
+  });
+
+  return !!existingMerchant;
+};
 
 export const completeOnboarding = async (data: {
   businessName: string;

@@ -1,19 +1,18 @@
 import { Building2, Store } from "lucide-react";
-import { NavigationButtons } from "./navigation-buttons";
+import { StepLayout } from "./step-layout";
 
 interface WelcomeStepProps {
   onNext: () => void;
 }
 
 export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
-  <div className="space-y-8">
-    <div className="text-center space-y-3">
-      <h2 className="text-3xl font-bold text-foreground">Vamos começar</h2>
-      <p className="text-lg text-muted-foreground">
-        Entenda como o Vortile organiza seu negócio
-      </p>
-    </div>
-
+  <StepLayout
+    title="Vamos começar"
+    description="Entenda como o Vortile organiza seu negócio"
+    onNext={onNext}
+    showBack={false}
+    centerHeader
+  >
     {/* Visual Diagram */}
     <div className="flex items-center justify-center gap-8 py-8">
       {/* Business Box */}
@@ -76,8 +75,5 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => (
         </li>
       </ul>
     </div>
-
-    {/* Navigation Buttons */}
-    <NavigationButtons onNext={onNext} showBack={false} />
-  </div>
+  </StepLayout>
 );

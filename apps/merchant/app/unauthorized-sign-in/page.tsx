@@ -8,7 +8,7 @@ const UnauthorizedSignInPage = () => (
         Você precisa estar logado para acessar esta página.
       </p>
     </div>
-    <SignIn />
+    <SignIn signUpUrl="/onboarding" />
   </div>
 );
 
