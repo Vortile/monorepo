@@ -1,0 +1,33 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "DATABASE_URL",
+    "ADMIN_AUTH_EMAIL",
+    "ADMIN_AUTH_PASSWORD",
+    "ADMIN_AUTH_JWT_SECRET",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL"
+  ],
+  "tasks": {
+    "build": {
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
+    "start": {
+      "persistent": true,
+      "cache": false
+    },
+    "lint": {
+      "cache": false
+    }
+  }
+}

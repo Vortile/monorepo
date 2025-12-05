@@ -1,0 +1,27 @@
+{
+  "name": "@vortile/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "drizzle-kit generate:pg",
+    "migrate": "drizzle-kit migrate",
+    "push": "drizzle-kit push:pg",
+    "studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
+    "@types/uuid": "^11.0.0",
+    "better-auth": "^1.3.34",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.30.0",
+    "pg": "^8.16.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "drizzle-kit": "^0.20.14",
+    "typescript": "^5.3.3"
+  }
+}
