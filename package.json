@@ -10,6 +10,7 @@
     "build:storefront": "turbo --filter storefront build",
     "dev": "turbo dev",
     "dev:api": "turbo dev --filter=api",
+    "dev:email": "turbo dev --filter=email",
     "dev:admin": "turbo dev --filter=admin",
     "dev:merchant": "turbo dev --filter=merchant",
     "dev:storefront": "turbo dev --filter=storefront",
