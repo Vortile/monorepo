@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -38,7 +37,7 @@ const signupSchema = z.object({
 });
 
 export default function AuthForm({ mode }: AuthFormProps) {
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<
