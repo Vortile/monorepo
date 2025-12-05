@@ -10,6 +10,7 @@ export const merchant = pgTable("merchant", {
     .$defaultFn(() => generateId()),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  clerkId: text("clerk_id").notNull().unique(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });

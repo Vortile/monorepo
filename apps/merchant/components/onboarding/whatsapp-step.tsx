@@ -13,12 +13,14 @@ interface WhatsappStepProps {
   };
   onBack: () => void;
   onNext: () => void;
+  isSubmitting?: boolean;
 }
 
 export const WhatsappStep = ({
   storeData,
   onBack,
   onNext,
+  isSubmitting = false,
 }: WhatsappStepProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +134,7 @@ export const WhatsappStep = ({
             onBack={onBack}
             onNext={onNext}
             nextLabel="Concluir"
+            isNextLoading={isSubmitting}
           />
         </div>
       )}
