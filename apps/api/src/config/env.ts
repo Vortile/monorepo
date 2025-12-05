@@ -1,9 +1,14 @@
+import { config } from "dotenv";
 import { z } from "zod";
+
+// Load .env.local first (preferred), then fall back to .env/PROCESS env
+config({ path: ".env.local", override: true });
+config();
 
 const envSchema = z.object({
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(3000),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string(),
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   EMAIL_FROM: z.string().email().optional(),
 });

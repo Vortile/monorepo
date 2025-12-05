@@ -61,7 +61,7 @@ const Home = () => {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/send"
             className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
@@ -83,6 +83,18 @@ const Home = () => {
             </h2>
             <p className="mt-2 text-sm text-slate-600">
               Review recent deliveries with adjustable batch size.
+            </p>
+          </Link>
+
+          <Link
+            href="/email-send"
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+          >
+            <h2 className="text-2xl font-semibold text-slate-900">
+              Send Email
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Compose and send an email via the API (Resend backend).
             </p>
           </Link>
         </div>
