@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { env } from "./config/env";
 import wabaRoute from "./routes/waba/waba";
+import emailsRoute from "./routes/emails/emails";
 
 const app = new Hono();
 
@@ -19,6 +20,7 @@ app.use(
 // Routes
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 app.route("/api/waba", wabaRoute);
+app.route("/api/emails", emailsRoute);
 
 const port = env.PORT;
 console.log(`Server running on http://localhost:${port}`);

@@ -5,11 +5,12 @@
     "NODE_ENV",
     "PORT",
     "DATABASE_URL",
-    "ADMIN_AUTH_EMAIL",
-    "ADMIN_AUTH_PASSWORD",
-    "ADMIN_AUTH_JWT_SECRET",
-    "BETTER_AUTH_SECRET",
-    "BETTER_AUTH_URL"
+
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+
+    "CLERK_SECRET_KEY",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
   ],
   "tasks": {
     "build": {

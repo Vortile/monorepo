@@ -19,3 +19,4 @@
 - **Arrow Functions**: ALWAYS use arrow functions. Do not use the `function` keyword.
 - **Implicit Returns**: Use implicit returns for arrow functions whenever possible (e.g., `const add = (a, b) => a + b`).
 - **Imports**: Use absolute imports with `@/` where configured, or package names for monorepo dependencies (e.g., `@vortile/database`).
+- **Backend placement**: Put server/API logic in `apps/api` (Hono). Avoid adding new Next.js API routes inside app folders; have the admin UI call the `apps/api` endpoints instead.
