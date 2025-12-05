@@ -227,6 +227,8 @@ export const CatalogPage = () => {
                     <Image
                       src={product.image || "/placeholder.svg"}
                       alt={product.name}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded object-cover bg-muted shrink-0"
                     />
                     <div className="min-w-0 flex-1">

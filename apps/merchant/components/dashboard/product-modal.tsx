@@ -209,6 +209,8 @@ export const ProductModal = ({
                     <Image
                       src={formData.image || "/placeholder.svg"}
                       alt="Preview"
+                      width={160}
+                      height={160}
                       className="max-h-40 max-w-40 rounded"
                     />
                   </div>
