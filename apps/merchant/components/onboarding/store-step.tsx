@@ -3,6 +3,8 @@ import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StepLayout } from "./step-layout";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Typography } from "@/components/ui/typography";
 
 interface StoreStepProps {
   initialData: {
@@ -64,9 +66,9 @@ export const StoreStep = ({
           className="text-base"
           required
         />
-        <p className="text-xs text-muted-foreground">
+        <Typography variant="muted" className="text-xs">
           Digite o nome do seu local de negócio
-        </p>
+        </Typography>
       </div>
 
       {/* Slug Preview */}
@@ -75,9 +77,9 @@ export const StoreStep = ({
         <div className="p-3 bg-muted rounded-lg border border-border text-sm text-muted-foreground font-mono">
           vortile.com/loja/<strong>{slug || "sua-loja"}</strong>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <Typography variant="muted" className="text-xs">
           Gerado automaticamente do nome da loja
-        </p>
+        </Typography>
       </div>
 
       {/* Support Phone */}
@@ -85,18 +87,10 @@ export const StoreStep = ({
         <Label htmlFor="support-phone" className="text-base font-semibold">
           Número de Suporte
         </Label>
-        <Input
-          id="support-phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="(11) 99999-9999"
-          className="text-base"
-          type="tel"
-          required
-        />
-        <p className="text-xs text-muted-foreground">
+        <PhoneInput id="support-phone" value={phone} onChange={setPhone} />
+        <Typography variant="muted" className="text-xs">
           O número que seus clientes usarão para entrar em contato
-        </p>
+        </Typography>
       </div>
     </StepLayout>
   );

@@ -1,25 +1,9 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, MessageSquare, ShoppingCart } from "lucide-react";
 
+// TODO: Fetch real data from API
 const chartData = [
   { day: "Seg", sales: 4000 },
   { day: "Ter", sales: 3000 },
@@ -30,6 +14,7 @@ const chartData = [
   { day: "Dom", sales: 3490 },
 ];
 
+// TODO: Fetch real data from API
 const recentOrders = [
   {
     id: "1",
@@ -68,7 +53,7 @@ const recentOrders = [
   },
 ];
 
-const statusConfig = {
+const statusConfig: Record<string, string> = {
   Entregue: "bg-green-100 text-green-800",
   Pendente: "bg-yellow-100 text-yellow-800",
   Processando: "bg-blue-100 text-blue-800",
