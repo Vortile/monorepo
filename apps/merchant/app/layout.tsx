@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,15 @@ const RootLayout = ({
 }: Readonly<{
   children: ReactNode;
 }>) => (
-  <ClerkProvider>
+  <ClerkProvider
+    localization={ptBR}
+    appearance={{
+      variables: {
+        colorPrimary: "#1298D5",
+        colorBackground: "#ffffff",
+      },
+    }}
+  >
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

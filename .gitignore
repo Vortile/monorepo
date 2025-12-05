@@ -30,6 +30,7 @@ dist/
 
 # Vercel
 .vercel
+.github*
 
 # TypeScript
 *.tsbuildinfo

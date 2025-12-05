@@ -8,7 +8,7 @@ import { StoreStep } from "@/components/onboarding/store-step";
 import { WhatsappStep } from "@/components/onboarding/whatsapp-step";
 import { completeOnboarding } from "../actions/onboarding";
 
-export default function OnboardingPage() {
+const OnboardingPage = () => {
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     businessName: "",
@@ -97,4 +97,6 @@ export default function OnboardingPage() {
       </div>
     </div>
   );
-}
+};
+
+export default OnboardingPage;
