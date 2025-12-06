@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,26 @@ import { Input } from "@/components/ui/input";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
+const buildBase = () => {
+  const raw = (API_BASE_URL ?? "").trim();
+  if (!raw) return null;
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    const url = new URL(withProtocol);
+    const pathname = url.pathname.replace(/\/$/, "");
+    if (!pathname.endsWith("/api")) {
+      url.pathname = `${pathname}/api`;
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch (_err) {
+    return null;
+  }
+};
 
 const fetchEmails = async (limit: number) => {
-  const response = await fetch(
-    `${API_BASE_URL}/emails?limit=${limit}&direction=all`,
-  );
+  const base = buildBase();
+  if (!base) throw new Error("Invalid NEXT_PUBLIC_API_BASE_URL");
+  const response = await fetch(`${base}/emails?limit=${limit}&direction=all`);
   if (!response.ok) {
     throw new Error("Unable to fetch emails");
   }
@@ -21,7 +36,9 @@ const fetchEmails = async (limit: number) => {
 };
 
 const fetchEmailDetail = async (id: string) => {
-  const response = await fetch(`${API_BASE_URL}/emails/${id}`);
+  const base = buildBase();
+  if (!base) throw new Error("Invalid NEXT_PUBLIC_API_BASE_URL");
+  const response = await fetch(`${base}/emails/${id}`);
   if (!response.ok) {
     throw new Error("Unable to fetch email details");
   }
@@ -30,14 +47,18 @@ const fetchEmailDetail = async (id: string) => {
 };
 
 type Email = {
-  id: string;
-  to?: string[];
-  from?: string;
-  subject?: string;
+  bcc: string[];
+  cc: string[];
   created_at: string;
-  direction?: string;
-  html?: string;
-  text?: string;
+  from: string;
+  id: string;
+  last_event: string;
+  reply_to: string[];
+  scheduled_at: string;
+  subject: string;
+  to: string[];
+  text: string;
+  html: string;
 };
 
 const EmailsPage = () => {
@@ -48,8 +69,9 @@ const EmailsPage = () => {
   const [limit, setLimit] = useState(10);
   const [error, setError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -64,8 +86,9 @@ const EmailsPage = () => {
         (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
       );
       setEmails(unique);
-      if (selectedEmail) {
-        const match = unique.find((item: any) => item.id === selectedEmail.id);
+      const selectedId = selectedIdRef.current;
+      if (selectedId) {
+        const match = unique.find((item: any) => item.id === selectedId);
         setSelectedEmail(match ?? null);
       }
     } catch (err) {
@@ -73,18 +96,21 @@ const EmailsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [limit]);
 
   const loadDetail = async (email: Email) => {
     setDetailError(null);
     setIsLoadingDetail(true);
     try {
       const detail = await fetchEmailDetail(email.id);
+      console.log("Email detail:", detail);
+      selectedIdRef.current = email.id;
       setSelectedEmail({ ...email, ...detail });
     } catch (err) {
       setDetailError(
         err instanceof Error ? err.message : "Failed to load email detail",
       );
+      selectedIdRef.current = email.id;
       setSelectedEmail(email);
     } finally {
       setIsLoadingDetail(false);
@@ -93,8 +119,7 @@ const EmailsPage = () => {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -151,7 +176,8 @@ const EmailsPage = () => {
                   <div className="text-sm text-slate-600">Loading…</div>
                 ) : (
                   emails.map((email) => {
-                    const direction = email.direction || "unknown";
+                    console.log(email);
+                    const lastEvent = email.last_event || "unknown";
                     const toLine = Array.isArray(email.to)
                       ? email.to.join(", ")
                       : "";
@@ -167,25 +193,36 @@ const EmailsPage = () => {
                             : "border-slate-200 bg-white"
                         }`}
                       >
+                        {/* Email unit */}
                         <div className="flex items-start justify-between gap-4">
+                          {/* Left side */}
                           <div className="space-y-1">
+                            {/* Header */}
                             <div className="flex items-center gap-2">
+                              {/* Subject */}
                               <p className="text-base font-semibold text-slate-900">
                                 {email.subject || "(No subject)"}
                               </p>
+
+                              {/* Status badge */}
                               <Badge
                                 variant="default"
                                 className="text-[10px] uppercase"
                               >
-                                {direction}
+                                {lastEvent}
                               </Badge>
                             </div>
-                            <p className="text-xs text-slate-600">
-                              {email.from ? `From: ${email.from}` : null}
-                              {email.from && toLine ? " • " : null}
-                              {toLine ? `To: ${toLine}` : null}
-                            </p>
+
+                            {/* Content */}
+                            <div className="flex flex-col text-xs text-slate-600">
+                              <span className="">
+                                {email.from ? `From: ${email.from}` : null}
+                              </span>
+                              <span>{toLine ? `To: ${toLine}` : null}</span>
+                            </div>
                           </div>
+
+                          {/* Right side - Date */}
                           <p className="text-xs whitespace-nowrap text-slate-500">
                             {new Date(email.created_at).toLocaleString()}
                           </p>
@@ -226,7 +263,7 @@ const EmailsPage = () => {
                         {new Date(selectedEmail.created_at).toLocaleString()}
                       </p>
                       <p className="mt-1 capitalize">
-                        {selectedEmail.direction || ""}
+                        {selectedEmail.last_event || ""}
                       </p>
                     </div>
                   </div>
@@ -261,7 +298,10 @@ const EmailsPage = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setSelectedEmail(null)}
+                      onClick={() => {
+                        selectedIdRef.current = null;
+                        setSelectedEmail(null);
+                      }}
                     >
                       Back to list
                     </Button>

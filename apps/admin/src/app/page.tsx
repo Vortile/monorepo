@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,39 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizedBaseUrl = useMemo(() => {
+    const raw = (API_BASE_URL ?? "").trim();
+    if (!raw) return null;
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      const url = new URL(withProtocol);
+      const pathname = url.pathname.replace(/\/$/, "");
+      if (!pathname.endsWith("/api")) {
+        url.pathname = `${pathname}/api`;
+      }
+      return url.toString().replace(/\/$/, "");
+    } catch (err) {
+      console.error("Invalid API_BASE_URL:", err);
+      return null;
+    }
+  }, []);
+
   const latestEmail = useMemo(() => emails[0], [emails]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      if (!normalizedBaseUrl) {
+        throw new Error(
+          "Invalid NEXT_PUBLIC_API_BASE_URL; include protocol, e.g. https://api.example.com/api",
+        );
+      }
+
       const response = await fetch(
-        `${API_BASE_URL}/emails?limit=${DEFAULT_LIMIT}`,
+        `${normalizedBaseUrl}/emails?limit=${DEFAULT_LIMIT}`,
       );
+
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body?.error ?? "Failed to load emails");
@@ -40,11 +64,11 @@ const Home = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [normalizedBaseUrl]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

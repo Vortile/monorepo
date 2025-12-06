@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,13 +21,34 @@ const EmailSendPage = () => {
   const [status, setStatus] = useState<ResultState>(null);
   const [isSending, setIsSending] = useState(false);
 
+  const normalizedBaseUrl = useMemo(() => {
+    const raw = (API_BASE_URL ?? "").trim();
+    if (!raw) return null;
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      const url = new URL(withProtocol);
+      const pathname = url.pathname.replace(/\/$/, "");
+      if (!pathname.endsWith("/api")) {
+        url.pathname = `${pathname}/api`;
+      }
+      return url.toString().replace(/\/$/, "");
+    } catch (_err) {
+      return null;
+    }
+  }, []);
+
   const canSend = to.trim() && subject.trim() && message.trim();
 
   const handleSend = async () => {
     setStatus(null);
     setIsSending(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/emails/send`, {
+      if (!normalizedBaseUrl) {
+        throw new Error(
+          "Invalid NEXT_PUBLIC_API_BASE_URL; include protocol, e.g. https://api.example.com/api",
+        );
+      }
+      const response = await fetch(`${normalizedBaseUrl}/emails/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

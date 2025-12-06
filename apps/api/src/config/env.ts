@@ -11,6 +11,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string(),
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   EMAIL_FROM: z.string().email().optional(),
+  ADMIN_ORIGIN: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse({
@@ -19,6 +20,7 @@ const parsed = envSchema.safeParse({
   DATABASE_URL: process.env.DATABASE_URL,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   EMAIL_FROM: process.env.EMAIL_FROM,
+  ADMIN_ORIGIN: process.env.ADMIN_ORIGIN,
 });
 
 if (!parsed.success) {

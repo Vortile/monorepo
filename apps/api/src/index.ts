@@ -10,7 +10,7 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: "http://localhost:3001",
+    origin: env.ADMIN_ORIGIN ?? "http://localhost:3001",
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
   })
