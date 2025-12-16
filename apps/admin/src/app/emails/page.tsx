@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,10 +25,12 @@ const buildBase = () => {
   }
 };
 
-const fetchEmails = async (limit: number) => {
+const fetchEmails = async (limit: number, direction: string) => {
   const base = buildBase();
   if (!base) throw new Error("Invalid NEXT_PUBLIC_API_BASE_URL");
-  const response = await fetch(`${base}/emails?limit=${limit}&direction=all`);
+  const response = await fetch(
+    `${base}/emails?limit=${limit}&direction=${direction}`,
+  );
   if (!response.ok) {
     throw new Error("Unable to fetch emails");
   }
@@ -59,6 +62,7 @@ type Email = {
   to: string[];
   text: string;
   html: string;
+  direction?: "sent" | "received";
 };
 
 const EmailsPage = () => {
@@ -67,6 +71,9 @@ const EmailsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [limit, setLimit] = useState(10);
+  const [direction, setDirection] = useState<"all" | "received" | "sent">(
+    "all",
+  );
   const [error, setError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -75,7 +82,7 @@ const EmailsPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const list = await fetchEmails(limit);
+      const list = await fetchEmails(limit, direction);
       const seen = new Map<string, Email>();
       list.forEach((item: any) => {
         if (!seen.has(item.id)) {
@@ -96,14 +103,14 @@ const EmailsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [limit]);
+  }, [limit, direction]);
 
   const loadDetail = async (email: Email) => {
     setDetailError(null);
     setIsLoadingDetail(true);
     try {
       const detail = await fetchEmailDetail(email.id);
-      console.log("Email detail:", detail);
+
       selectedIdRef.current = email.id;
       setSelectedEmail({ ...email, ...detail });
     } catch (err) {
@@ -128,17 +135,38 @@ const EmailsPage = () => {
           <Badge variant="muted" className="tracking-[0.25em] uppercase">
             Resend
           </Badge>
-          <h1 className="text-4xl font-black sm:text-5xl">Latest Emails</h1>
+          <h1 className="text-4xl font-black sm:text-5xl">Inbox</h1>
           <p className="text-slate-600">
-            Review recent deliveries and adjust how many to load.
+            View all inbound and outbound emails.
           </p>
         </div>
 
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <CardTitle className="text-2xl">Sent & Received</CardTitle>
-              <p className="text-sm text-slate-600">Powered by /api/emails.</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={direction === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDirection("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={direction === "received" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDirection("received")}
+                >
+                  Received
+                </Button>
+                <Button
+                  variant={direction === "sent" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDirection("sent")}
+                >
+                  Sent
+                </Button>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
@@ -176,7 +204,6 @@ const EmailsPage = () => {
                   <div className="text-sm text-slate-600">Loading…</div>
                 ) : (
                   emails.map((email) => {
-                    console.log(email);
                     const lastEvent = email.last_event || "unknown";
                     const toLine = Array.isArray(email.to)
                       ? email.to.join(", ")
@@ -199,6 +226,13 @@ const EmailsPage = () => {
                           <div className="space-y-1">
                             {/* Header */}
                             <div className="flex items-center gap-2">
+                              {email.direction === "received" ? (
+                                <ArrowDownLeft className="h-4 w-4 text-green-600" />
+                              ) : email.direction === "sent" ? (
+                                <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                              ) : (
+                                <Mail className="h-4 w-4 text-slate-400" />
+                              )}
                               {/* Subject */}
                               <p className="text-base font-semibold text-slate-900">
                                 {email.subject || "(No subject)"}
@@ -278,19 +312,26 @@ const EmailsPage = () => {
                     <p className="text-sm text-slate-600">Loading details…</p>
                   ) : null}
 
-                  <div className="flex-1 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-800">
+                  <div className="flex-1 overflow-hidden rounded-lg border border-slate-100 bg-white">
                     {selectedEmail.html ? (
-                      <div
-                        dangerouslySetInnerHTML={{ __html: selectedEmail.html }}
+                      <iframe
+                        srcDoc={selectedEmail.html}
+                        className="h-full w-full border-0"
+                        title="Email Content"
+                        sandbox="allow-same-origin"
                       />
                     ) : selectedEmail.text ? (
-                      <pre className="text-sm whitespace-pre-wrap">
-                        {selectedEmail.text}
-                      </pre>
+                      <div className="h-full overflow-y-auto p-4">
+                        <pre className="font-mono text-sm whitespace-pre-wrap text-slate-800">
+                          {selectedEmail.text}
+                        </pre>
+                      </div>
                     ) : (
-                      <p className="text-sm text-slate-600">
-                        No content available.
-                      </p>
+                      <div className="p-4">
+                        <p className="text-sm text-slate-600">
+                          No content available.
+                        </p>
+                      </div>
                     )}
                   </div>
 

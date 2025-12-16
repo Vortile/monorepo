@@ -1,18 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReactNode } from "react";
 
 export const StatCard = ({
   label,
   value,
   hint,
-  content,
   tone = "default",
 }: {
   label: string;
   value: string;
   hint?: string;
-  content?: ReactNode;
   tone?: "default" | "success" | "muted";
 }) => (
   <Card className="h-fit border-slate-200 bg-white">

@@ -6,27 +6,28 @@ const emailsRoute = new Hono();
 
 const getResend = () => new Resend(env.RESEND_API_KEY);
 
-type ResendEmail = Record<string, unknown>;
-
-const normalizeList = (data: unknown): ResendEmail[] =>
-  Array.isArray((data as { data?: unknown[] } | undefined)?.data)
-    ? ((data as { data?: unknown[] }).data as ResendEmail[])
-    : Array.isArray(data)
-    ? (data as ResendEmail[])
-    : [];
-
 const fetchEmailsByDirection = async (
   direction: "received" | "sent",
   limit: number
 ) => {
   const resend = getResend();
-  const { data, error } = await resend.get(
-    `/emails?direction=${direction}&limit=${limit}`
-  );
+
+  if (direction === "received") {
+    const { data, error } = await resend.emails.receiving.list({ limit });
+    if (error) {
+      throw error;
+    }
+    const items = data?.data || [];
+    return items.map((item) => ({ ...item, object: "email", direction }));
+  }
+
+  // Sent emails
+  const { data, error } = await resend.emails.list();
   if (error) {
     throw error;
   }
-  return normalizeList(data);
+  const items = data?.data || [];
+  return items.map((item) => ({ ...item, object: "email", direction }));
 };
 
 emailsRoute.get("/", async (c) => {
@@ -50,8 +51,8 @@ emailsRoute.get("/", async (c) => {
     const items = results.flat();
 
     const sorted = items.sort((a, b) => {
-      const aDate = Date.parse(String(a.created_at ?? a.createdAt ?? 0));
-      const bDate = Date.parse(String(b.created_at ?? b.createdAt ?? 0));
+      const aDate = Date.parse(String(a.created_at ?? a.created_at ?? 0));
+      const bDate = Date.parse(String(b.created_at ?? b.created_at ?? 0));
       return bDate - aDate;
     });
 
@@ -102,13 +103,22 @@ emailsRoute.get("/:id", async (c) => {
 
   try {
     const resend = getResend();
-    const { data, error } = await resend.get(`/emails/${id}`);
 
-    if (error) {
-      return c.json({ error }, 500);
+    // Try to fetch as sent email first
+    const { data: sentData, error: sentError } = await resend.emails.get(id);
+    if (!sentError && sentData) {
+      return c.json({ data: { ...sentData, direction: "sent" } });
     }
 
-    return c.json({ data });
+    // If not found, try to fetch as received email
+    const { data: receivedData, error: receivedError } =
+      await resend.emails.receiving.get(id);
+    if (!receivedError && receivedData) {
+      return c.json({ data: { ...receivedData, direction: "received" } });
+    }
+
+    // If both fail, return error
+    return c.json({ error: sentError || receivedError }, 404);
   } catch (error) {
     console.error("Error fetching email details:", error);
     return c.json({ error: "Internal Server Error" }, 500);
