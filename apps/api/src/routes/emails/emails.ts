@@ -81,7 +81,7 @@ emailsRoute.post("/send", async (c) => {
       from: fromAddress,
       to: [to],
       subject,
-      html: `<p>${message}</p>`,
+      text: message,
     });
 
     if (error) {
