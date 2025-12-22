@@ -1,11 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Mail } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Mail,
+  Reply,
+  X,
+  Paperclip,
+  Download,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
@@ -20,7 +30,7 @@ const buildBase = () => {
       url.pathname = `${pathname}/api`;
     }
     return url.toString().replace(/\/$/, "");
-  } catch (_err) {
+  } catch {
     return null;
   }
 };
@@ -49,6 +59,16 @@ const fetchEmailDetail = async (id: string) => {
   return body.data;
 };
 
+type Attachment = {
+  id?: string;
+  filename: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: any;
+  content_type: string;
+  size: number;
+  path?: string;
+};
+
 type Email = {
   bcc: string[];
   cc: string[];
@@ -63,13 +83,14 @@ type Email = {
   text: string;
   html: string;
   direction?: "sent" | "received";
+  attachments?: Attachment[];
 };
 
 const EmailsPage = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  // const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [limit, setLimit] = useState(10);
   const [direction, setDirection] = useState<"all" | "received" | "sent">(
     "all",
@@ -78,12 +99,77 @@ const EmailsPage = () => {
   const [detailError, setDetailError] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
 
+  // Reply state
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
+  const downloadAttachment = (att: Attachment) => {
+    if (att.path) {
+      window.open(att.path, "_blank");
+      return;
+    }
+
+    // If we have an ID, use the API download endpoint directly
+    if (att.id && selectedEmail?.id) {
+      const base = buildBase();
+      if (base) {
+        const url = `${base}/emails/${selectedEmail.id}/attachments/${att.id}`;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = att.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+    }
+
+    if (!att.content) {
+      console.warn("Attachment has no content or path:", att);
+      alert("Unable to download: Attachment content is missing.");
+      return;
+    }
+
+    try {
+      let content = att.content;
+
+      // Handle Node.js Buffer JSON representation
+      if (
+        content &&
+        typeof content === "object" &&
+        content.type === "Buffer" &&
+        Array.isArray(content.data)
+      ) {
+        content = new Uint8Array(content.data);
+      } else if (Array.isArray(content)) {
+        content = new Uint8Array(content);
+      }
+
+      const blob = new Blob([content], {
+        type: att.content_type || "application/octet-stream",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = att.filename || "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Failed to download attachment", e);
+      alert("Failed to download attachment. Check console for details.");
+    }
+  };
+
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const list = await fetchEmails(limit, direction);
       const seen = new Map<string, Email>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       list.forEach((item: any) => {
         if (!seen.has(item.id)) {
           seen.set(item.id, item);
@@ -95,6 +181,7 @@ const EmailsPage = () => {
       setEmails(unique);
       const selectedId = selectedIdRef.current;
       if (selectedId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const match = unique.find((item: any) => item.id === selectedId);
         setSelectedEmail(match ?? null);
       }
@@ -107,7 +194,7 @@ const EmailsPage = () => {
 
   const loadDetail = async (email: Email) => {
     setDetailError(null);
-    setIsLoadingDetail(true);
+    // setIsLoadingDetail(true);
     try {
       const detail = await fetchEmailDetail(email.id);
 
@@ -120,7 +207,54 @@ const EmailsPage = () => {
       selectedIdRef.current = email.id;
       setSelectedEmail(email);
     } finally {
-      setIsLoadingDetail(false);
+      // setIsLoadingDetail(false);
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedEmail) return;
+
+    setIsSendingReply(true);
+    setReplyError(null);
+
+    try {
+      const base = buildBase();
+      if (!base) throw new Error("Invalid API URL");
+
+      // Determine "to" address: if received, reply to sender. If sent, reply to recipient.
+      const toAddress =
+        selectedEmail.direction === "received"
+          ? selectedEmail.from
+          : selectedEmail.to[0];
+
+      const response = await fetch(`${base}/emails/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: toAddress,
+          subject: selectedEmail.subject.startsWith("Re:")
+            ? selectedEmail.subject
+            : `Re: ${selectedEmail.subject}`,
+          message: replyMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to send reply");
+      }
+
+      // Success
+      setIsReplyOpen(false);
+      setReplyMessage("");
+      // Optionally reload to see the new sent email
+      load();
+    } catch (err) {
+      setReplyError(
+        err instanceof Error ? err.message : "Failed to send reply",
+      );
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -308,8 +442,53 @@ const EmailsPage = () => {
                     </div>
                   ) : null}
 
-                  {isLoadingDetail ? (
-                    <p className="text-sm text-slate-600">Loading details…</p>
+                  {selectedEmail.attachments &&
+                  selectedEmail.attachments.length > 0 ? (
+                    <div className="space-y-2 border-t border-slate-100 pt-3">
+                      <p className="text-xs font-medium text-slate-500">
+                        Attachments
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedEmail.attachments.map((att, i) => {
+                          const canDownload = !!(att.content || att.path);
+                          return (
+                            <button
+                              type="button"
+                              key={i}
+                              disabled={!canDownload}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (canDownload) downloadAttachment(att);
+                              }}
+                              className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition ${
+                                canDownload
+                                  ? "cursor-pointer border-slate-200 bg-slate-50 hover:bg-slate-100"
+                                  : "cursor-not-allowed border-slate-100 bg-slate-50 opacity-60"
+                              }`}
+                              title={
+                                canDownload
+                                  ? "Download"
+                                  : "Content not available for this attachment"
+                              }
+                            >
+                              <Paperclip className="h-4 w-4 text-slate-400" />
+                              <span className="font-medium text-slate-700">
+                                {att.filename}
+                              </span>
+                              {att.size ? (
+                                <span className="text-xs text-slate-500">
+                                  ({Math.round(att.size / 1024)} KB)
+                                </span>
+                              ) : null}
+                              {canDownload ? (
+                                <Download className="ml-1 h-3 w-3 text-slate-400" />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ) : null}
 
                   <div className="flex-1 overflow-hidden rounded-lg border border-slate-100 bg-white">
@@ -348,9 +527,21 @@ const EmailsPage = () => {
                     </Button>
                     <Button
                       type="button"
+                      variant="outline"
                       onClick={() => loadDetail(selectedEmail)}
                     >
                       Refresh
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setReplyMessage("");
+                        setReplyError(null);
+                        setIsReplyOpen(true);
+                      }}
+                    >
+                      <Reply className="mr-2 h-4 w-4" />
+                      Reply
                     </Button>
                   </div>
                 </div>
@@ -358,6 +549,85 @@ const EmailsPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Reply Modal */}
+        {isReplyOpen && selectedEmail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <Card className="animate-in fade-in zoom-in-95 w-full max-w-lg shadow-xl duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xl">Reply to Email</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsReplyOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>To</Label>
+                  <Input
+                    readOnly
+                    disabled
+                    value={
+                      selectedEmail.direction === "received"
+                        ? selectedEmail.from
+                        : selectedEmail.to.join(", ")
+                    }
+                    className="bg-slate-50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subject</Label>
+                  <Input
+                    readOnly
+                    disabled
+                    value={
+                      selectedEmail.subject.startsWith("Re:")
+                        ? selectedEmail.subject
+                        : `Re: ${selectedEmail.subject}`
+                    }
+                    className="bg-slate-50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Message</Label>
+                  <Textarea
+                    placeholder="Type your reply..."
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </div>
+
+                {replyError && (
+                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                    {replyError}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsReplyOpen(false)}
+                    disabled={isSendingReply}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSendReply}
+                    disabled={!replyMessage.trim() || isSendingReply}
+                  >
+                    {isSendingReply ? "Sending..." : "Send Reply"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );

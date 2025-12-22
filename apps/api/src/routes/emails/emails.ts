@@ -125,4 +125,56 @@ emailsRoute.get("/:id", async (c) => {
   }
 });
 
+emailsRoute.get("/:emailId/attachments/:id", async (c) => {
+  const emailId = c.req.param("emailId");
+  const id = c.req.param("id");
+
+  if (!emailId || !id) {
+    return c.json({ error: "Missing emailId or attachment id" }, 400);
+  }
+
+  try {
+    const resend = getResend();
+    // @ts-expect-error - Resend types might be missing this specific method
+    const { data, error } = await resend.attachments.receiving.get({
+      id,
+      emailId,
+    });
+
+    if (error) {
+      console.error("Resend attachment error:", error);
+      return c.json({ error }, 500);
+    }
+
+    const content = data.content;
+    let buffer: Buffer;
+
+    if (Buffer.isBuffer(content)) {
+      buffer = content;
+    } else if (Array.isArray(content)) {
+      buffer = Buffer.from(content);
+    } else if (
+      typeof content === "object" &&
+      content &&
+      "type" in content &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (content as any).type === "Buffer"
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      buffer = Buffer.from((content as any).data);
+    } else {
+      return c.json({ error: "Invalid content format" }, 500);
+    }
+
+    c.header("Content-Type", data.contentType || "application/octet-stream");
+    c.header("Content-Disposition", `attachment; filename="${data.filename}"`);
+    c.header("Content-Length", String(buffer.length));
+
+    return c.body(buffer as unknown as ArrayBuffer);
+  } catch (error) {
+    console.error("Error fetching attachment:", error);
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
 export default emailsRoute;
