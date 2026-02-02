@@ -15,6 +15,7 @@
     "dev:merchant": "turbo dev --filter=merchant",
     "dev:storefront": "turbo dev --filter=storefront",
     "start": "pnpm -r --parallel start",
+    "i": "pnpm -r i",
     "preinstall": "npx only-allow pnpm",
     "clean": "pnpm -r --parallel exec rm -rf node_modules && rm -rf node_modules",
     "lint": "eslint .",

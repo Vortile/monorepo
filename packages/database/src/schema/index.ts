@@ -3,3 +3,6 @@ export * from "./auth.schema";
 
 // Merchants - Business entities, storefronts, customers
 export * from "./merchants";
+
+// Messaging - WABA accounts, phone numbers, webhooks, templates
+export * from "./messaging";

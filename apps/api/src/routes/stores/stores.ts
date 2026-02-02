@@ -1,10 +1,9 @@
 // apps/api/src/routes/stores/stores.ts
 import { Hono } from "hono";
-import { db } from "@vortile/database";
-import { store } from "@vortile/database/src/schema";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { listStoresByMerchantId } from "../../db/queries";
+import { createStore } from "../../db/mutations";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -13,9 +12,7 @@ const app = new Hono()
       return c.json({ error: "merchantId is required" }, 400);
     }
 
-    const allStores = await db.query.store.findMany({
-      where: eq(store.merchantId, merchantId),
-    });
+    const allStores = await listStoresByMerchantId(merchantId);
     return c.json(allStores);
   })
   .post(
@@ -26,30 +23,24 @@ const app = new Hono()
         merchantId: z.string(),
         name: z.string(),
         slug: z.string().optional(),
-      })
+      }),
     ),
     async (c) => {
       const { merchantId, name, slug } = c.req.valid("json");
-      const storeSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
       try {
-        const [newStore] = await db
-          .insert(store)
-          .values({
-            merchantId,
-            name,
-            slug: storeSlug,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .returning();
+        const [newStore] = await createStore({
+          merchantId,
+          name,
+          slug,
+        });
 
         return c.json(newStore, 201);
       } catch (e) {
         console.error(e);
         return c.json({ error: "Failed to create store" }, 500);
       }
-    }
+    },
   );
 
 export default app;
