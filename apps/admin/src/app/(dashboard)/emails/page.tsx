@@ -266,7 +266,7 @@ const EmailsPage = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-12 sm:px-8">
         <div className="space-y-3">
-          <Badge variant="muted" className="tracking-[0.25em] uppercase">
+          <Badge variant="secondary" className="tracking-[0.25em] uppercase">
             Resend
           </Badge>
           <h1 className="text-4xl font-black sm:text-5xl">Inbox</h1>

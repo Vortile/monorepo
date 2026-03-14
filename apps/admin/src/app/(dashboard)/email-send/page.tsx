@@ -32,7 +32,7 @@ const EmailSendPage = () => {
         url.pathname = `${pathname}/api`;
       }
       return url.toString().replace(/\/$/, "");
-    } catch (_err) {
+    } catch {
       return null;
     }
   }, []);
@@ -86,7 +86,7 @@ const EmailSendPage = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-12 sm:px-8">
         <div className="space-y-3">
-          <Badge variant="muted" className="tracking-[0.25em] uppercase">
+          <Badge variant="secondary" className="tracking-[0.25em] uppercase">
             Resend
           </Badge>
           <h1 className="text-4xl font-black sm:text-5xl">Send an Email</h1>

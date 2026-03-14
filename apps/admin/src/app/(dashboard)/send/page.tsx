@@ -138,7 +138,7 @@ const SendPage = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-8">
         <div className="space-y-3">
-          <Badge variant="muted" className="tracking-[0.25em] uppercase">
+          <Badge variant="secondary" className="tracking-[0.25em] uppercase">
             Send
           </Badge>
           <h1 className="text-4xl font-black sm:text-5xl">
@@ -151,7 +151,7 @@ const SendPage = () => {
 
         <Card>
           <CardHeader className="space-y-2">
-            <Badge variant="muted" className="tracking-[0.2em] uppercase">
+            <Badge variant="secondary" className="tracking-[0.2em] uppercase">
               WhatsApp Cloud +{" "}
             </Badge>
             <CardTitle className="text-3xl">Live Chat Debugger</CardTitle>
@@ -212,7 +212,7 @@ const SendPage = () => {
 
         <Card className="border-slate-200 bg-white">
           <CardHeader className="space-y-2">
-            <Badge variant="muted" className="tracking-[0.2em] uppercase">
+            <Badge variant="secondary" className="tracking-[0.2em] uppercase">
               Templates
             </Badge>
             <CardTitle className="text-3xl">Template Manager</CardTitle>
