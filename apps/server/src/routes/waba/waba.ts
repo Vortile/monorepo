@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import type { StatusCode } from "hono/utils/http-status";
+import { env } from "../../config/env";
 
 const GRAPH_API_VERSION = "v24.0";
-const META_WABA_ACCESS_TOKEN =
-  "EAAKEilPuJlMBQMvZAHZAYwMIpFuMzmYw9hCJxTZCZAgZA94a6e61Sh9TcLJinbEggSwRI4ASavTbGQZAIYLsYzZCZCoNetHjVWnOWK078uGdYoWIwuDRsq480JnNufjFGwXVjH4HfjQRwjKAfPbH4Ed3lbEHekEO9k9O3vbhal42G5P5Qwh7I9qHAUmZBjCZCd0yVO94Ox752o1lUJLztij1KECbKhAN91uwOjQwGw7jsL31Pe78HfsGz7nGseajPJGvQbnHMtCgZBB65ZC84xcfByhc";
-const META_WABA_PHONE_NUMBER_ID = "862267443641266";
-const META_WABA_ID = "1048456590645552";
+const META_WABA_ACCESS_TOKEN = env.META_WABA_ACCESS_TOKEN;
+const META_WABA_PHONE_NUMBER_ID = env.META_WABA_PHONE_NUMBER_ID;
+const META_WABA_ID = env.META_WABA_ID;
 
 type MessageType = "text" | "interactive" | "reaction" | "template";
 type MessageInteractionType =
@@ -81,7 +81,7 @@ wabaRoute.post("/create-template", async (c) => {
   if (!templateName || !category || !bodyText) {
     return c.json(
       { error: "templateName, category, and bodyText are required" },
-      400
+      400,
     );
   }
 
