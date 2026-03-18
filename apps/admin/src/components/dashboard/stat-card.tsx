@@ -12,10 +12,11 @@ export const StatCard = ({
   hint?: string;
   tone?: "default" | "success" | "muted";
 }) => {
-  const badgeVariant = tone === "success" ? "default" : tone === "muted" ? "secondary" : "default";
+  const badgeVariant =
+    tone === "success" ? "default" : tone === "muted" ? "secondary" : "default";
 
   return (
-    <Card className="h-fit border-slate-200 bg-white dark:bg-slate-950 dark:border-slate-800">
+    <Card className="h-fit border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
       <CardHeader className="relative flex w-full items-start justify-between overflow-hidden pb-4">
         <div className="w-full">
           <p className="text-xs font-semibold tracking-[0.2em] text-indigo-600 uppercase dark:text-indigo-400">
@@ -33,7 +34,16 @@ export const StatCard = ({
               : "Real-time snapshot"}
         </p>
         {hint ? (
-          <Badge variant={badgeVariant as "default" | "secondary" | "destructive" | "outline"} className="mt-4 truncate">
+          <Badge
+            variant={
+              badgeVariant as
+                | "default"
+                | "secondary"
+                | "destructive"
+                | "outline"
+            }
+            className="mt-4 truncate"
+          >
             {hint}
           </Badge>
         ) : null}

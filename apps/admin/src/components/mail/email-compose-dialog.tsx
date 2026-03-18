@@ -14,7 +14,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
 
 interface EmailComposeDialogProps {
   open: boolean;
@@ -25,7 +26,11 @@ interface EmailComposeDialogProps {
   };
 }
 
-export const EmailComposeDialog = ({ open, onOpenChange, replyTo }: EmailComposeDialogProps) => {
+export const EmailComposeDialog = ({
+  open,
+  onOpenChange,
+  replyTo,
+}: EmailComposeDialogProps) => {
   const [to, setTo] = React.useState("");
   const [from, setFrom] = React.useState("");
   const [subject, setSubject] = React.useState("");
@@ -35,7 +40,11 @@ export const EmailComposeDialog = ({ open, onOpenChange, replyTo }: EmailCompose
   React.useEffect(() => {
     if (open && replyTo) {
       setTo(replyTo.email);
-      setSubject(replyTo.subject.startsWith("Re:") ? replyTo.subject : `Re: ${replyTo.subject}`);
+      setSubject(
+        replyTo.subject.startsWith("Re:")
+          ? replyTo.subject
+          : `Re: ${replyTo.subject}`,
+      );
     } else if (open && !replyTo) {
       setTo("");
       setSubject("");
@@ -121,7 +130,7 @@ export const EmailComposeDialog = ({ open, onOpenChange, replyTo }: EmailCompose
             />
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="message" className="text-right pt-2">
+            <Label htmlFor="message" className="pt-2 text-right">
               Message
             </Label>
             <Textarea
@@ -134,11 +143,15 @@ export const EmailComposeDialog = ({ open, onOpenChange, replyTo }: EmailCompose
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={handleSend} disabled={!canSend || isSending}>
+          <Button
+            type="button"
+            onClick={handleSend}
+            disabled={!canSend || isSending}
+          >
             {isSending ? "Sending..." : "Send"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};

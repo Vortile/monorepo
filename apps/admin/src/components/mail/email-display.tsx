@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { EmailComposeDialog } from "./email-compose-dialog";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
 
 type Email = {
   id: string;
@@ -24,7 +25,13 @@ type Email = {
   attachments?: Record<string, unknown>[];
 };
 
-export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialMail: Email }) => {
+export const EmailDisplay = ({
+  mailId,
+  initialMail,
+}: {
+  mailId: string;
+  initialMail: Email;
+}) => {
   const [mail, setMail] = React.useState<Email>(initialMail);
   const [loading, setLoading] = React.useState(false);
   const [replyOpen, setReplyOpen] = React.useState(false);
@@ -58,7 +65,11 @@ export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialM
     <div className="flex h-full flex-col">
       <div className="flex items-center p-4">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setReplyOpen(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setReplyOpen(true)}
+          >
             <Reply className="h-4 w-4" />
             <span className="sr-only">Reply</span>
           </Button>
@@ -67,7 +78,7 @@ export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialM
       <Separator />
 
       {loading && !mail.html && !mail.text ? (
-        <div className="flex-1 p-8 text-center text-muted-foreground animate-pulse">
+        <div className="text-muted-foreground flex-1 animate-pulse p-8 text-center">
           Loading content...
         </div>
       ) : (
@@ -75,19 +86,20 @@ export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialM
           <div className="p-8">
             <div className="mb-6 flex gap-4">
               <Avatar className="h-10 w-10">
-                <AvatarFallback>{mail.from?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {mail.from?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="flex flex-1 flex-col gap-1">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div className="font-semibold">{mail.from}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {format(new Date(mail.created_at || new Date()), "PPP p")}
                   </div>
                 </div>
                 <div className="text-sm font-medium">{mail.subject}</div>
-                <div className="text-xs text-muted-foreground">
-                  To: {" "}
-                  {mail.to?.join(", ")}
+                <div className="text-muted-foreground text-xs">
+                  To: {mail.to?.join(", ")}
                 </div>
               </div>
             </div>
@@ -102,35 +114,47 @@ export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialM
             ) : mail.text ? (
               <div className="text-sm whitespace-pre-wrap">{mail.text}</div>
             ) : (
-              <div className="text-sm italic text-muted-foreground">Empty message.</div>
+              <div className="text-muted-foreground text-sm italic">
+                Empty message.
+              </div>
             )}
 
             {mail.attachments && mail.attachments.length > 0 && (
               <>
                 <Separator className="my-6" />
                 <div className="flex flex-col gap-3">
-                  <div className="text-sm font-medium flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
                     <Paperclip className="h-4 w-4" /> Attachments
                   </div>
                   <div className="flex flex-wrap gap-4">
-                    {mail.attachments.map((att: Record<string, unknown>, i: number) => (
-                      <div key={i} className="flex flex-col items-center gap-2 rounded-lg border p-4 w-40 text-center relative max-w-full overflow-hidden bg-muted/20">
-                         <div className="bg-primary/10 rounded-full p-3">
-                           <Paperclip className="h-6 w-6 text-primary" />
-                         </div>
-                         <span className="text-xs w-full truncate" title={att.filename as string}>
-                           {att.filename as string}
-                         </span>
-                         <span className="text-[10px] text-muted-foreground">
-                           {((att.size as number) / 1024).toFixed(1)} KB
-                         </span>
-                         <a 
-                           href={`${API_BASE_URL}/emails/${mailId}/attachments/${String(att.id || i)}`} 
-                           target="_blank" download={att.filename as string}
-                           className="absolute inset-0 z-10" rel="noreferrer"
-                         />
-                      </div>
-                    ))}
+                    {mail.attachments.map(
+                      (att: Record<string, unknown>, i: number) => (
+                        <div
+                          key={i}
+                          className="bg-muted/20 relative flex w-40 max-w-full flex-col items-center gap-2 overflow-hidden rounded-lg border p-4 text-center"
+                        >
+                          <div className="bg-primary/10 rounded-full p-3">
+                            <Paperclip className="text-primary h-6 w-6" />
+                          </div>
+                          <span
+                            className="w-full truncate text-xs"
+                            title={att.filename as string}
+                          >
+                            {att.filename as string}
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">
+                            {((att.size as number) / 1024).toFixed(1)} KB
+                          </span>
+                          <a
+                            href={`${API_BASE_URL}/emails/${mailId}/attachments/${String(att.id || i)}`}
+                            target="_blank"
+                            download={att.filename as string}
+                            className="absolute inset-0 z-10"
+                            rel="noreferrer"
+                          />
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
               </>
@@ -145,4 +169,4 @@ export const EmailDisplay = ({ mailId, initialMail }: { mailId: string; initialM
       />
     </div>
   );
-}
+};

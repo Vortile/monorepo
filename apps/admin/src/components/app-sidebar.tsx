@@ -5,6 +5,7 @@ import {
   IconDashboard,
   IconInnerShadowTop,
   IconMessageCircle,
+  IconPlus,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -22,6 +23,7 @@ import {
 
 const navMain = [
   { title: "Dashboard", url: "/", icon: IconDashboard },
+  { title: "Compose Email", url: "/compose", icon: IconPlus },
   { title: "WhatsApp Templates", url: "/send", icon: IconMessageCircle },
 ];
 

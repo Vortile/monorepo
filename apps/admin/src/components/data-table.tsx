@@ -11,6 +11,7 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconLoader,
+  IconRefresh,
   IconSearch,
   IconX,
 } from "@tabler/icons-react";
@@ -38,7 +39,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -72,14 +72,13 @@ type DataTableProps = {
   data: z.infer<typeof schema>[];
   onView?: (email: z.infer<typeof schema>) => void;
   onForward?: (email: z.infer<typeof schema>) => void;
-  onDelete?: (email: z.infer<typeof schema>) => void;
   onRowClick?: (email: z.infer<typeof schema>) => void;
+  onRefresh?: () => void;
 };
 
 const createColumns = (
   onView?: DataTableProps["onView"],
   onForward?: DataTableProps["onForward"],
-  onDelete?: DataTableProps["onDelete"],
 ): ColumnDef<z.infer<typeof schema>>[] => [
   {
     id: "select",
@@ -94,7 +93,10 @@ const createColumns = (
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
+      <div
+        className="flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
@@ -159,6 +161,7 @@ const createColumns = (
               variant="ghost"
               className="text-muted-foreground data-[state=open]:bg-muted flex size-8"
               size="icon"
+              onClick={(e) => e.stopPropagation()}
             />
           }
         >
@@ -166,18 +169,21 @@ const createColumns = (
           <span className="sr-only">Open menu</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem onClick={() => onView?.(row.original)}>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              onView?.(row.original);
+            }}
+          >
             View
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onForward?.(row.original)}>
-            Forward
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
-            variant="destructive"
-            onClick={() => onDelete?.(row.original)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onForward?.(row.original);
+            }}
           >
-            Delete
+            Forward
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -189,8 +195,8 @@ export const DataTable = ({
   data,
   onView,
   onForward,
-  onDelete,
   onRowClick,
+  onRefresh,
 }: DataTableProps) => {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -205,8 +211,8 @@ export const DataTable = ({
   });
 
   const columns = React.useMemo(
-    () => createColumns(onView, onForward, onDelete),
-    [onView, onForward, onDelete],
+    () => createColumns(onView, onForward),
+    [onView, onForward],
   );
 
   const table = useReactTable({
@@ -245,37 +251,45 @@ export const DataTable = ({
       <div className="flex flex-col gap-4 py-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Emails</h2>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="outline" size="sm" />}
-            >
-              <IconLayoutColumns />
-              <span className="hidden lg:inline">Customize Columns</span>
-              <span className="lg:hidden">Columns</span>
-              <IconChevronDown />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide(),
-                )
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            {onRefresh && (
+              <Button variant="outline" size="sm" onClick={onRefresh}>
+                <IconRefresh />
+                <span className="hidden lg:inline">Refresh</span>
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="outline" size="sm" />}
+              >
+                <IconLayoutColumns />
+                <span className="hidden lg:inline">Customize Columns</span>
+                <span className="lg:hidden">Columns</span>
+                <IconChevronDown />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) =>
+                      typeof column.accessorFn !== "undefined" &&
+                      column.getCanHide(),
+                  )
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1">

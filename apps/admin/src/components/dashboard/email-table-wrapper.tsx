@@ -32,47 +32,9 @@ export const EmailTableWrapper = ({ data }: EmailTableWrapperProps) => {
     setForwardDialogOpen(true);
   }, []);
 
-  const handleDelete = React.useCallback(
-    async (email: EmailData) => {
-      if (!email.resendId) {
-        alert("Cannot delete: Email ID not available");
-        return;
-      }
-
-      if (
-        !confirm(
-          `Are you sure you want to cancel/delete the email "${email.subject}"?`,
-        )
-      ) {
-        return;
-      }
-
-      try {
-        const API_BASE = (
-          process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
-        ).replace(/\/$/, "");
-
-        const res = await fetch(`${API_BASE}/api/emails/${email.resendId}`, {
-          method: "DELETE",
-        });
-
-        if (!res.ok) {
-          const json = await res.json();
-          throw new Error(json.error || "Failed to delete email");
-        }
-
-        alert("Email canceled successfully");
-        router.refresh();
-      } catch (error) {
-        alert(
-          error instanceof Error
-            ? error.message
-            : "Failed to delete email. Only scheduled emails can be canceled.",
-        );
-      }
-    },
-    [router],
-  );
+  const handleRefresh = React.useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   return (
     <>
@@ -80,8 +42,8 @@ export const EmailTableWrapper = ({ data }: EmailTableWrapperProps) => {
         data={data}
         onView={handleView}
         onForward={handleForward}
-        onDelete={handleDelete}
         onRowClick={handleView}
+        onRefresh={handleRefresh}
       />
       <EmailViewDialog
         email={selectedEmail}
