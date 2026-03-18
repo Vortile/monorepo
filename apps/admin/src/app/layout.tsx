@@ -3,6 +3,10 @@ import { Providers } from "./providers";
 import "./globals.css";
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Vortile Solutions - Admin Dashboard",
@@ -10,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = async ({ children }: Readonly<{ children: ReactNode }>) => (
-  <html lang="en">
+  <html lang="en" className={cn("font-sans", geist.variable)}>
     <body>
       <Providers>
         {children}

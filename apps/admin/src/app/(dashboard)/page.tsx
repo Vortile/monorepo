@@ -1,171 +1,121 @@
-"use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { Button } from "@/components/ui/button";
+import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { SectionCards } from "@/components/section-cards";
+import { EmailTableWrapper } from "@/components/dashboard/email-table-wrapper";
 
-type Email = {
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
+).replace(/\/$/, "");
+
+type ResendEmail = {
   id: string;
-  to: string[];
   subject: string;
+  to: string[];
+  last_event: string;
   created_at: string;
 };
 
-const DEFAULT_LIMIT = 10;
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
+const fetchEmails = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/emails?limit=50`, {
+      cache: "no-store",
+    });
 
-const Home = () => {
-  const [emails, setEmails] = useState<Email[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const normalizedBaseUrl = useMemo(() => {
-    const raw = (API_BASE_URL ?? "").trim();
-    if (!raw) return null;
-    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-    try {
-      const url = new URL(withProtocol);
-      const pathname = url.pathname.replace(/\/$/, "");
-      if (!pathname.endsWith("/api")) {
-        url.pathname = `${pathname}/api`;
-      }
-      return url.toString().replace(/\/$/, "");
-    } catch (err) {
-      console.error("Invalid API_BASE_URL:", err);
-      return null;
+    if (!res.ok) {
+      console.error(`Failed to fetch emails: ${res.status} ${res.statusText}`);
+      return [];
     }
-  }, []);
 
-  const latestEmail = useMemo(() => emails[0], [emails]);
+    const body = await res.json();
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      if (!normalizedBaseUrl) {
-        throw new Error(
-          "Invalid NEXT_PUBLIC_API_BASE_URL; include protocol, e.g. https://api.example.com/api",
-        );
-      }
-
-      const response = await fetch(
-        `${normalizedBaseUrl}/emails?limit=${DEFAULT_LIMIT}`,
-      );
-
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body?.error ?? "Failed to load emails");
-      }
-      const list = Array.isArray(body?.data) ? body.data : [];
-      setEmails(list as Email[]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load emails");
-    } finally {
-      setIsLoading(false);
+    if (!body?.data || !Array.isArray(body.data)) {
+      console.error("Invalid response format:", body);
+      return [];
     }
-  }, [normalizedBaseUrl]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+    const list: ResendEmail[] = body.data;
+    return list.map((email, i) => ({
+      id: i + 1,
+      resendId: email.id,
+      subject: email.subject ?? "(no subject)",
+      to: Array.isArray(email.to) ? email.to[0] : (email.to ?? ""),
+      status: email.last_event === "bounced" ? "Bounced" : "Delivered",
+      date: email.created_at ?? "",
+    }));
+  } catch (error) {
+    console.error("Error fetching emails:", error);
+    return [];
+  }
+};
+
+const Page = async () => {
+  const emails = await fetchEmails();
+
+  // Calculate real metrics
+  const totalEmails = emails.length;
+  const deliveredCount = emails.filter((e) => e.status === "Delivered").length;
+  const bouncedCount = emails.filter((e) => e.status === "Bounced").length;
+  const deliveryRate =
+    totalEmails > 0 ? (deliveredCount / totalEmails) * 100 : 0;
+  const bounceRate = totalEmails > 0 ? (bouncedCount / totalEmails) * 100 : 0;
+  const activeRecipients = new Set(emails.map((e) => e.to)).size;
+
+  // Aggregate email data by date for chart
+  const emailsByDate = emails.reduce(
+    (acc, email) => {
+      // Normalize date to YYYY-MM-DD format
+      const dateObj = new Date(email.date);
+      const date = dateObj.toISOString().split("T")[0]; // Get YYYY-MM-DD
+      if (!acc[date]) {
+        acc[date] = { sent: 0, delivered: 0 };
+      }
+      acc[date].sent += 1;
+      if (email.status === "Delivered") {
+        acc[date].delivered += 1;
+      }
+      return acc;
+    },
+    {} as Record<string, { sent: number; delivered: number }>,
+  );
+
+  // Convert to chart data format and sort by date
+  const chartData = Object.entries(emailsByDate)
+    .map(([date, counts]) => ({
+      date,
+      sent: counts.sent,
+      delivered: counts.delivered,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16 sm:px-8">
-        <div className="space-y-3">
-          <p className="text-xs font-semibold tracking-[0.25em] text-slate-500 uppercase">
-            Vortile Admin
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <SectionCards
+        totalEmails={totalEmails}
+        deliveryRate={deliveryRate}
+        bounceRate={bounceRate}
+        activeRecipients={activeRecipients}
+      />
+      <ChartAreaInteractive data={chartData} />
+      {emails.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            No emails found. Make sure the server is running on{" "}
+            <code className="text-foreground bg-muted rounded px-1 py-0.5 text-xs">
+              http://localhost:3000
+            </code>
           </p>
-          <h1 className="text-4xl font-black sm:text-5xl">
-            Operations Console
-          </h1>
-          <p className="text-slate-600">
-            Choose where to go: send flows or inspect recent Resend emails.
+          <p className="text-muted-foreground text-xs">
+            Run{" "}
+            <code className="text-foreground bg-muted rounded px-1 py-0.5">
+              pnpm dev:api
+            </code>{" "}
+            to start the server.
           </p>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Link
-            href="/send"
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
-          >
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Send & Templates
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Trigger WhatsApp Cloud messages and manage template submissions.
-            </p>
-          </Link>
-
-          <Link
-            href="/emails"
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
-          >
-            <h2 className="text-2xl font-semibold text-slate-900">Inbox</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              View all inbound and outbound emails.
-            </p>
-          </Link>
-
-          <Link
-            href="/email-send"
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
-          >
-            <h2 className="text-2xl font-semibold text-slate-900">
-              Send Email
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Compose and send an email via the API (Resend backend).
-            </p>
-          </Link>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-600">
-            Snapshot of the latest {DEFAULT_LIMIT} Resend emails.
-          </p>
-          <div className="flex items-center gap-2">
-            {error ? (
-              <span className="text-sm text-red-600">{error}</span>
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={load}
-              disabled={isLoading}
-            >
-              {isLoading ? "Refreshing…" : "Refresh"}
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard
-            label="Recent Emails"
-            value={`${emails.length}/${DEFAULT_LIMIT}`}
-            hint={emails.length > 0 ? "Fetched" : "No data"}
-            tone={emails.length > 0 ? "success" : "muted"}
-          />
-          <StatCard
-            label="Latest Subject"
-            value={latestEmail?.subject ? latestEmail.subject : "—"}
-            hint={latestEmail?.to ? latestEmail.to.join(", ") : "Awaiting"}
-          />
-          <StatCard
-            label="Latest Timestamp"
-            value={
-              latestEmail?.created_at
-                ? new Date(latestEmail.created_at).toLocaleString()
-                : "—"
-            }
-            hint="Resend feed"
-          />
-        </div>
-      </main>
+      ) : (
+        <EmailTableWrapper data={emails} />
+      )}
     </div>
   );
 };
 
-export default Home;
+export default Page;

@@ -8,7 +8,7 @@ const getResend = () => new Resend(env.RESEND_API_KEY);
 
 const fetchEmailsByDirection = async (
   direction: "received" | "sent",
-  limit: number
+  limit: number,
 ) => {
   const resend = getResend();
 
@@ -41,12 +41,12 @@ emailsRoute.get("/", async (c) => {
   const directions: Array<"received" | "sent"> = wantsAll
     ? ["received", "sent"]
     : direction === "sent"
-    ? ["sent"]
-    : ["received"];
+      ? ["sent"]
+      : ["received"];
 
   try {
     const results = await Promise.all(
-      directions.map((dir) => fetchEmailsByDirection(dir, limit))
+      directions.map((dir) => fetchEmailsByDirection(dir, limit)),
     );
     const items = results.flat();
 
@@ -121,6 +121,30 @@ emailsRoute.get("/:id", async (c) => {
     return c.json({ error: sentError || receivedError }, 404);
   } catch (error) {
     console.error("Error fetching email details:", error);
+    return c.json({ error: "Internal Server Error" }, 500);
+  }
+});
+
+emailsRoute.delete("/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!id) {
+    return c.json({ error: "Missing id" }, 400);
+  }
+
+  try {
+    const resend = getResend();
+
+    // Resend only allows canceling scheduled emails
+    const { data, error } = await resend.emails.cancel(id);
+
+    if (error) {
+      console.error("Resend cancel error:", error);
+      return c.json({ error }, 500);
+    }
+
+    return c.json({ data });
+  } catch (error) {
+    console.error("Error canceling email:", error);
     return c.json({ error: "Internal Server Error" }, 500);
   }
 });
