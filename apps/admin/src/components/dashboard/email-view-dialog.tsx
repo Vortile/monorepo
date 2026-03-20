@@ -90,7 +90,7 @@ export const EmailViewDialog = ({
           <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>Email Details</DialogTitle>
             <DialogDescription>
-              View the full details of this email
+              View the full details of this email.
             </DialogDescription>
           </DialogHeader>
 
