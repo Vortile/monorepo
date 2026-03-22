@@ -20,7 +20,7 @@
     "clean": "pnpm -r --parallel exec rm -rf node_modules && rm -rf node_modules",
     "lint": "eslint .",
     "db:generate": "pnpm --filter @vortile/database generate",
-    "db:push": "pnpm --filter @vortile/database push"
+    "db:push": "pnpm --filter @vortile/database db:push"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

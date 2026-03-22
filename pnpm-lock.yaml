@@ -472,10 +472,13 @@ importers:
         version: 16.6.1
       drizzle-orm:
         specifier: ^0.30.0
-        version: 0.30.10(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.2.6)(kysely@0.28.8)(pg@8.16.3)(react@19.2.0)
+        version: 0.30.10(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.2.6)(kysely@0.28.8)(pg@8.16.3)(postgres@3.4.8)(react@19.2.0)
       pg:
         specifier: ^8.16.3
         version: 8.16.3
+      postgres:
+        specifier: ^3.4.8
+        version: 3.4.8
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -7243,6 +7246,10 @@ packages:
 
   postgres-range@1.1.4:
     resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
+
+  postgres@3.4.8:
+    resolution: {integrity: sha512-d+JFcLM17njZaOLkv6SCev7uoLaBtfK86vMUXhW1Z4glPWh4jozno9APvW/XKFJ3CCxVoC7OL38BqRydtu5nGg==}
+    engines: {node: '>=12'}
 
   powershell-utils@0.1.0:
     resolution: {integrity: sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A==}
@@ -14327,7 +14334,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.30.10(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.2.6)(kysely@0.28.8)(pg@8.16.3)(react@19.2.0):
+  drizzle-orm@0.30.10(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.2.6)(kysely@0.28.8)(pg@8.16.3)(postgres@3.4.8)(react@19.2.0):
     optionalDependencies:
       '@neondatabase/serverless': 0.9.5
       '@opentelemetry/api': 1.9.0
@@ -14335,6 +14342,7 @@ snapshots:
       '@types/react': 19.2.6
       kysely: 0.28.8
       pg: 8.16.3
+      postgres: 3.4.8
       react: 19.2.0
 
   dunder-proto@1.0.1:
@@ -16699,6 +16707,8 @@ snapshots:
   postgres-interval@3.0.0: {}
 
   postgres-range@1.1.4: {}
+
+  postgres@3.4.8: {}
 
   powershell-utils@0.1.0: {}
 

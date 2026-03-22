@@ -23,6 +23,15 @@ export const waba = pgTable("waba", {
   /** Provider app identifier (e.g. GupShup App ID). */
   providerAppId: text("provider_app_id"),
 
+  /** Business portfolio ID from Meta (for embedded signup). */
+  businessPortfolioId: text("business_portfolio_id"),
+
+  /** Coexist mode enabled - user can use both Business App and Cloud API. */
+  coexistEnabled: boolean("coexist_enabled").notNull().default(false),
+
+  /** Onboarding method (embedded_signup, manual, etc.) */
+  onboardingMethod: text("onboarding_method"),
+
   name: text("name"),
   status: text("status").notNull().default("active"),
   isPrimary: boolean("is_primary").notNull().default(false),

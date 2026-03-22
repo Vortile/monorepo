@@ -1,7 +1,4 @@
-// Auth - System & Auth tables for Merchants and Admins
-export * from "./auth.schema";
-
-// Merchants - Business entities, storefronts, customers
+// Merchants - Business entities
 export * from "./merchants";
 
 // Messaging - WABA accounts, phone numbers, webhooks, templates

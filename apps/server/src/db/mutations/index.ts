@@ -1,2 +1,2 @@
-export * from "./merchants";
-export * from "./stores";
+export * from "./merchants.mutations";
+export * from "./waba.mutations";

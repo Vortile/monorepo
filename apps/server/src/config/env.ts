@@ -12,13 +12,17 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   EMAIL_FROM: z.string().email().optional(),
   ADMIN_ORIGIN: z.string().url().optional(),
-  META_WABA_ACCESS_TOKEN: z
+
+  // Gupshup Partner API Configuration for WABA Onboarding
+  GUPSHUP_PARTNER_ID: z.string().min(1, "GUPSHUP_PARTNER_ID is required"),
+  GUPSHUP_PARTNER_TOKEN: z.string().min(1, "GUPSHUP_PARTNER_TOKEN is required"),
+  GUPSHUP_PARTNER_API_URL: z
     .string()
-    .min(1, "META_WABA_ACCESS_TOKEN is required"),
-  META_WABA_PHONE_NUMBER_ID: z
+    .url()
+    .default("https://partner.gupshup.io"),
+  GUPSHUP_WEBHOOK_VERIFY_TOKEN: z
     .string()
-    .min(1, "META_WABA_PHONE_NUMBER_ID is required"),
-  META_WABA_ID: z.string().min(1, "META_WABA_ID is required"),
+    .min(1, "GUPSHUP_WEBHOOK_VERIFY_TOKEN is required"),
 });
 
 const parsed = envSchema.safeParse({
@@ -28,9 +32,12 @@ const parsed = envSchema.safeParse({
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   EMAIL_FROM: process.env.EMAIL_FROM,
   ADMIN_ORIGIN: process.env.ADMIN_ORIGIN,
-  META_WABA_ACCESS_TOKEN: process.env.META_WABA_ACCESS_TOKEN,
-  META_WABA_PHONE_NUMBER_ID: process.env.META_WABA_PHONE_NUMBER_ID,
-  META_WABA_ID: process.env.META_WABA_ID,
+
+  // Gupshup Partner API Configuration
+  GUPSHUP_PARTNER_ID: process.env.GUPSHUP_PARTNER_ID,
+  GUPSHUP_PARTNER_TOKEN: process.env.GUPSHUP_PARTNER_TOKEN,
+  GUPSHUP_PARTNER_API_URL: process.env.GUPSHUP_PARTNER_API_URL,
+  GUPSHUP_WEBHOOK_VERIFY_TOKEN: process.env.GUPSHUP_WEBHOOK_VERIFY_TOKEN,
 });
 
 if (!parsed.success) {
