@@ -159,6 +159,8 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
 
   try {
     const resend = getResend();
+    console.log(`Fetching attachment - emailId: ${emailId}, attachmentId: ${id}`);
+    
     // @ts-expect-error - Resend types might be missing this specific method
     const { data, error } = await resend.attachments.receiving.get({
       id,
@@ -167,7 +169,12 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
 
     if (error) {
       console.error("Resend attachment error:", error);
-      return c.json({ error }, 500);
+      return c.json({ error: error.message || error }, 500);
+    }
+
+    if (!data) {
+      console.error("No attachment data returned from Resend API");
+      return c.json({ error: "Attachment not found" }, 404);
     }
 
     const content = data.content;
@@ -187,17 +194,19 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       buffer = Buffer.from((content as any).data);
     } else {
+      console.error("Invalid content format:", typeof content);
       return c.json({ error: "Invalid content format" }, 500);
     }
 
     c.header("Content-Type", data.contentType || "application/octet-stream");
-    c.header("Content-Disposition", `attachment; filename="${data.filename}"`);
+    c.header("Content-Disposition", `inline; filename="${data.filename}"`);
     c.header("Content-Length", String(buffer.length));
 
     return c.body(buffer as unknown as ArrayBuffer);
   } catch (error) {
     console.error("Error fetching attachment:", error);
-    return c.json({ error: "Internal Server Error" }, 500);
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    return c.json({ error: errorMessage }, 500);
   }
 });
 

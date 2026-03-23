@@ -6,6 +6,7 @@ import {
   IconInnerShadowTop,
   IconMessageCircle,
   IconPlus,
+  IconDeviceMobile,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -25,6 +26,7 @@ const navMain = [
   { title: "Dashboard", url: "/", icon: IconDashboard },
   { title: "Compose Email", url: "/compose", icon: IconPlus },
   { title: "WhatsApp Templates", url: "/send", icon: IconMessageCircle },
+  { title: "Register WABA", url: "/waba/register", icon: IconDeviceMobile },
 ];
 
 export const AppSidebar = ({

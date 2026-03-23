@@ -3,6 +3,8 @@ import {
   registerManualOnboarding,
   getAppDetails,
   sendMessage,
+  listAllApps,
+  deleteApp,
 } from "../../services/waba/waba-onboarding.service";
 import { env } from "../../config/env";
 
@@ -139,6 +141,64 @@ wabaOnboardingRoute.post("/send-message", async (c) => {
     });
   } catch (error) {
     console.error("Error sending message:", error);
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      500,
+    );
+  }
+});
+
+/**
+ * GET /waba/onboarding/apps
+ *
+ * List all Gupshup apps for this partner account.
+ * Shows all apps linked to the partner, including their health status.
+ */
+wabaOnboardingRoute.get("/apps", async (c) => {
+  try {
+    const result = await listAllApps();
+
+    return c.json({
+      success: true,
+      data: result.apps,
+      count: result.apps.length,
+    });
+  } catch (error) {
+    console.error("Error listing apps:", error);
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      500,
+    );
+  }
+});
+
+/**
+ * DELETE /waba/onboarding/apps/:appId
+ *
+ * Delete/deactivate a WABA app from our system.
+ * NOTE: This only removes the app from our database.
+ * To fully delete from Gupshup, you must use the Partner Portal.
+ */
+wabaOnboardingRoute.delete("/apps/:appId", async (c) => {
+  try {
+    const appId = c.req.param("appId");
+
+    if (!appId) {
+      return c.json({ error: "Missing appId parameter" }, 400);
+    }
+
+    const result = await deleteApp(appId);
+
+    return c.json({
+      success: result.success,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error("Error deleting app:", error);
     return c.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",

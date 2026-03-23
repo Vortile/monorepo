@@ -2,21 +2,27 @@ import { db, eq, and } from "@vortile/database";
 import { waba, wabaCredential, wabaPhoneNumber } from "@vortile/database";
 
 /**
- * Get all WABAs for a merchant.
+ * Get all WABAs for a merchant (excludes soft-deleted).
  */
 export const getWabasByMerchantId = async (merchantId: string) =>
-  await db.select().from(waba).where(eq(waba.merchantId, merchantId));
+  await db
+    .select()
+    .from(waba)
+    .where(and(eq(waba.merchantId, merchantId), eq(waba.isDeleted, false)));
 
 /**
- * Get a specific WABA by ID.
+ * Get a specific WABA by ID (excludes soft-deleted).
  */
 export const getWabaById = async (wabaId: string) => {
-  const result = await db.select().from(waba).where(eq(waba.id, wabaId));
+  const result = await db
+    .select()
+    .from(waba)
+    .where(and(eq(waba.id, wabaId), eq(waba.isDeleted, false)));
   return result[0] ?? null;
 };
 
 /**
- * Get WABA by provider account ID.
+ * Get WABA by provider account ID (includes soft-deleted for validation).
  */
 export const getWabaByProviderAccountId = async (
   providerAccountId: string,

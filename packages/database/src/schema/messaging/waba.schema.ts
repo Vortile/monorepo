@@ -35,6 +35,7 @@ export const waba = pgTable("waba", {
   name: text("name"),
   status: text("status").notNull().default("active"),
   isPrimary: boolean("is_primary").notNull().default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),

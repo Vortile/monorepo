@@ -115,12 +115,7 @@ const EmailsPage = () => {
       const base = buildBase();
       if (base) {
         const url = `${base}/emails/${selectedEmail.id}/attachments/${att.id}`;
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = att.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        window.open(url, "_blank");
         return;
       }
     }

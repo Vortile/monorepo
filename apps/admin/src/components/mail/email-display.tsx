@@ -148,7 +148,6 @@ export const EmailDisplay = ({
                           <a
                             href={`${API_BASE_URL}/emails/${mailId}/attachments/${String(att.id || i)}`}
                             target="_blank"
-                            download={att.filename as string}
                             className="absolute inset-0 z-10"
                             rel="noreferrer"
                           />

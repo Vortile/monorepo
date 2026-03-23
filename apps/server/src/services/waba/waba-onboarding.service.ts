@@ -6,6 +6,8 @@ import {
 } from "../../db/mutations/waba.mutations";
 import { getWabaByProviderAccountId } from "../../db/queries/waba.queries";
 import { createMerchant } from "../../db/mutations/merchants.mutations";
+import { db, waba } from "@vortile/database";
+import { eq } from "drizzle-orm";
 
 /**
  * Gupshup Partner API Types
@@ -309,5 +311,84 @@ export const getAppDetails = async (
     status: data.status || "unknown",
     wabaId: data.wabaId || data.waId || "",
     namespace: data.namespace || "",
+  };
+};
+
+/**
+ * List all Gupshup apps for this partner account.
+ * See: https://partner-docs.gupshup.io/reference/get_partner-account-api-partnerapps
+ */
+export const listAllApps = async (): Promise<{
+  apps: Array<{
+    id: string;
+    name: string;
+    phone?: string;
+    customerId: string;
+    live: boolean;
+    stopped: boolean;
+    healthy: boolean;
+    createdOn: number;
+    modifiedOn: number;
+  }>;
+}> => {
+  const response = await fetch(
+    `${env.GUPSHUP_PARTNER_API_URL}/partner/account/api/partnerApps`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: env.GUPSHUP_PARTNER_TOKEN,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to list apps: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  if (data.status !== "success") {
+    throw new Error(`Gupshup API error: ${JSON.stringify(data)}`);
+  }
+
+  return {
+    apps: data.partnerAppsList || [],
+  };
+};
+
+/**
+ * Soft delete a WABA from our system.
+ * Marks the WABA as deleted without removing data.
+ * This allows for recovery and maintains referential integrity.
+ *
+ * @param appId - The Gupshup app ID (providerAccountId in our DB)
+ */
+export const deleteApp = async (
+  appId: string,
+): Promise<{ success: boolean; message: string }> => {
+  // Find WABA in our database
+  const existingWaba = await getWabaByProviderAccountId(appId, "gupshup");
+
+  if (!existingWaba) {
+    throw new Error(`App ${appId} not found in database`);
+  }
+
+  if (existingWaba.isDeleted) {
+    throw new Error(`App ${appId} is already deleted`);
+  }
+
+  // Soft delete: just mark as deleted
+  await db
+    .update(waba)
+    .set({
+      isDeleted: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(waba.providerAccountId, appId));
+
+  return {
+    success: true,
+    message: `App ${appId} has been soft deleted. Data preserved for recovery.`,
   };
 };
