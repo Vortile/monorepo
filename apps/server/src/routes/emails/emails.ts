@@ -159,8 +159,10 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
 
   try {
     const resend = getResend();
-    console.log(`Fetching attachment - emailId: ${emailId}, attachmentId: ${id}`);
-    
+    console.log(
+      `Fetching attachment - emailId: ${emailId}, attachmentId: ${id}`,
+    );
+
     // @ts-expect-error - Resend types might be missing this specific method
     const { data, error } = await resend.attachments.receiving.get({
       id,
@@ -205,7 +207,8 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
     return c.body(buffer as unknown as ArrayBuffer);
   } catch (error) {
     console.error("Error fetching attachment:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal Server Error";
     return c.json({ error: errorMessage }, 500);
   }
 });

@@ -199,4 +199,4 @@ export const RegisterWabaForm = () => {
       </div>
     </div>
   );
-}
+};
