@@ -10,6 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string(),
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
   EMAIL_FROM: z.string().email().optional(),
   ADMIN_ORIGIN: z.string().url().optional(),
 
@@ -30,6 +31,7 @@ const parsed = envSchema.safeParse({
   PORT: process.env.PORT,
   DATABASE_URL: process.env.DATABASE_URL,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET,
   EMAIL_FROM: process.env.EMAIL_FROM,
   ADMIN_ORIGIN: process.env.ADMIN_ORIGIN,
 

@@ -4,3 +4,7 @@ export * from "./waba-phone-number.schema";
 export * from "./waba-credential.schema";
 export * from "./waba-webhook.schema";
 export * from "./waba-template.schema";
+
+// Email - Email storage and attachments
+export * from "./email.schema";
+export * from "./email-attachment.schema";

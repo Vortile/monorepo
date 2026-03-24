@@ -1,10 +1,15 @@
 import { Hono } from "hono";
 import { Resend } from "resend";
 import { env } from "../../config/env";
+import emailWebhookRoute from "./email-webhook.route";
+import { getEmailAttachmentById } from "../../db/queries/email.queries";
 
 const emailsRoute = new Hono();
 
 const getResend = () => new Resend(env.RESEND_API_KEY);
+
+// Mount webhook route
+emailsRoute.route("/webhook", emailWebhookRoute);
 
 const fetchEmailsByDirection = async (
   direction: "received" | "sent",
@@ -158,50 +163,32 @@ emailsRoute.get("/:emailId/attachments/:id", async (c) => {
   }
 
   try {
-    const resend = getResend();
     console.log(
-      `Fetching attachment - emailId: ${emailId}, attachmentId: ${id}`,
+      `Fetching attachment from database - emailId: ${emailId}, attachmentId: ${id}`,
     );
 
-    // @ts-expect-error - Resend types might be missing this specific method
-    const { data, error } = await resend.attachments.receiving.get({
-      id,
-      emailId,
-    });
+    const attachment = await getEmailAttachmentById(id);
 
-    if (error) {
-      console.error("Resend attachment error:", error);
-      return c.json({ error: error.message || error }, 500);
-    }
-
-    if (!data) {
-      console.error("No attachment data returned from Resend API");
+    if (!attachment) {
+      console.error("Attachment not found in database:", id);
       return c.json({ error: "Attachment not found" }, 404);
     }
 
-    const content = data.content;
-    let buffer: Buffer;
-
-    if (Buffer.isBuffer(content)) {
-      buffer = content;
-    } else if (Array.isArray(content)) {
-      buffer = Buffer.from(content);
-    } else if (
-      typeof content === "object" &&
-      content &&
-      "type" in content &&
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (content as any).type === "Buffer"
-    ) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      buffer = Buffer.from((content as any).data);
-    } else {
-      console.error("Invalid content format:", typeof content);
-      return c.json({ error: "Invalid content format" }, 500);
+    if (attachment.emailId !== emailId) {
+      console.error("Attachment does not belong to this email");
+      return c.json({ error: "Attachment not found" }, 404);
     }
 
-    c.header("Content-Type", data.contentType || "application/octet-stream");
-    c.header("Content-Disposition", `inline; filename="${data.filename}"`);
+    const buffer = Buffer.from(attachment.content, "base64");
+
+    c.header(
+      "Content-Type",
+      attachment.contentType || "application/octet-stream",
+    );
+    c.header(
+      "Content-Disposition",
+      `inline; filename="${attachment.filename}"`,
+    );
     c.header("Content-Length", String(buffer.length));
 
     return c.body(buffer as unknown as ArrayBuffer);
