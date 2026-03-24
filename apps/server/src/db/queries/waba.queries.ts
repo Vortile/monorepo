@@ -1,5 +1,10 @@
 import { db, eq, and, getTableColumns } from "@vortile/database";
-import { waba, wabaCredential, wabaPhoneNumber, merchant } from "@vortile/database";
+import {
+  waba,
+  wabaCredential,
+  wabaPhoneNumber,
+  merchant,
+} from "@vortile/database";
 
 /**
  * Get all WABAs across all merchants (admin view, excludes soft-deleted).

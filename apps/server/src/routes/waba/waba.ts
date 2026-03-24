@@ -14,7 +14,7 @@ wabaRoute.get("/", async (c) => {
   try {
     const merchantId = c.req.query("merchantId");
 
-    const wabas = merchantId 
+    const wabas = merchantId
       ? await getWabasByMerchantId(merchantId)
       : await getAllWabas();
 
@@ -39,7 +39,9 @@ wabaRoute.post("/send-message", async (c) => {
     );
   }
 
-  console.log(`[V3] Sending WhatsApp text to ${phoneNumber} via WABA ${wabaId}`);
+  console.log(
+    `[V3] Sending WhatsApp text to ${phoneNumber} via WABA ${wabaId}`,
+  );
 
   try {
     // Get WABA metadata to find the Gupshup app ID
