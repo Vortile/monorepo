@@ -6,6 +6,7 @@
     "dev": "PORT=3000 tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "emails:sync": "tsx --env-file=.env.local src/scripts/backfill-emails.ts",
     "vercel:link": "pnpm dlx vercel link --scope vortile --project server --yes",
     "env:pull": "pnpm dlx vercel env pull .env.local",
     "env:add": "pnpm dlx vercel env add",

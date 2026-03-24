@@ -15,6 +15,7 @@ export const emailAttachment = pgTable("email_attachment", {
   filename: text("filename").notNull(),
   contentType: text("content_type").notNull(),
   size: integer("size").notNull(),
+  // Base64-encoded file content
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

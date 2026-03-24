@@ -2,7 +2,12 @@ import { Hono } from "hono";
 import { Resend } from "resend";
 import { env } from "../../config/env";
 import emailWebhookRoute from "./email-webhook.route";
-import { getEmailAttachmentById } from "../../db/queries/email.queries";
+import {
+  getEmailAttachmentById,
+  getEmails,
+  getEmailByResendIdOrId,
+  getEmailAttachmentsByEmailId,
+} from "../../db/queries/email.queries";
 
 const emailsRoute = new Hono();
 
@@ -11,30 +16,6 @@ const getResend = () => new Resend(env.RESEND_API_KEY);
 // Mount webhook route
 emailsRoute.route("/webhook", emailWebhookRoute);
 
-const fetchEmailsByDirection = async (
-  direction: "received" | "sent",
-  limit: number,
-) => {
-  const resend = getResend();
-
-  if (direction === "received") {
-    const { data, error } = await resend.emails.receiving.list({ limit });
-    if (error) {
-      throw error;
-    }
-    const items = data?.data || [];
-    return items.map((item) => ({ ...item, object: "email", direction }));
-  }
-
-  // Sent emails
-  const { data, error } = await resend.emails.list();
-  if (error) {
-    throw error;
-  }
-  const items = data?.data || [];
-  return items.map((item) => ({ ...item, object: "email", direction }));
-};
-
 emailsRoute.get("/", async (c) => {
   const parsedLimit = Number(c.req.query("limit"));
   const limit = Number.isFinite(parsedLimit)
@@ -42,26 +23,25 @@ emailsRoute.get("/", async (c) => {
     : 10;
 
   const direction = c.req.query("direction");
-  const wantsAll = !direction || direction === "all";
-  const directions: Array<"received" | "sent"> = wantsAll
-    ? ["received", "sent"]
-    : direction === "sent"
-      ? ["sent"]
-      : ["received"];
 
   try {
-    const results = await Promise.all(
-      directions.map((dir) => fetchEmailsByDirection(dir, limit)),
+    const emails = await getEmails(
+      limit,
+      direction === "sent" || direction === "received" ? direction : undefined,
     );
-    const items = results.flat();
 
-    const sorted = items.sort((a, b) => {
-      const aDate = Date.parse(String(a.created_at ?? a.created_at ?? 0));
-      const bDate = Date.parse(String(b.created_at ?? b.created_at ?? 0));
-      return bDate - aDate;
-    });
+    const formatted = emails.map((email) => ({
+      id: email.resendId,
+      object: "email",
+      from: email.from,
+      to: email.to,
+      subject: email.subject,
+      created_at: email.resendCreatedAt.toISOString(),
+      direction: email.direction,
+      last_event: email.lastEvent ?? "delivered",
+    }));
 
-    return c.json({ data: sorted.slice(0, limit) });
+    return c.json({ data: formatted });
   } catch (error) {
     console.error("Error fetching emails:", error);
     return c.json({ error: "Internal Server Error" }, 500);
@@ -107,23 +87,38 @@ emailsRoute.get("/:id", async (c) => {
   }
 
   try {
-    const resend = getResend();
+    const email = await getEmailByResendIdOrId(id);
 
-    // Try to fetch as sent email first
-    const { data: sentData, error: sentError } = await resend.emails.get(id);
-    if (!sentError && sentData) {
-      return c.json({ data: { ...sentData, direction: "sent" } });
+    if (!email) {
+      return c.json({ error: "Email not found" }, 404);
     }
 
-    // If not found, try to fetch as received email
-    const { data: receivedData, error: receivedError } =
-      await resend.emails.receiving.get(id);
-    if (!receivedError && receivedData) {
-      return c.json({ data: { ...receivedData, direction: "received" } });
-    }
+    const attachments = await getEmailAttachmentsByEmailId(email.id);
 
-    // If both fail, return error
-    return c.json({ error: sentError || receivedError }, 404);
+    const formatted = {
+      id: email.resendId,
+      object: "email",
+      from: email.from,
+      to: email.to,
+      cc: email.cc ?? [],
+      bcc: email.bcc ?? [],
+      reply_to: email.replyTo ?? [],
+      subject: email.subject,
+      text: email.text ?? "",
+      html: email.html ?? "",
+      headers: email.headers,
+      created_at: email.resendCreatedAt.toISOString(),
+      direction: email.direction,
+      last_event: email.lastEvent ?? "delivered",
+      attachments: attachments.map((att) => ({
+        id: att.id,
+        filename: att.filename,
+        content_type: att.contentType,
+        size: att.size,
+      })),
+    };
+
+    return c.json({ data: formatted });
   } catch (error) {
     console.error("Error fetching email details:", error);
     return c.json({ error: "Internal Server Error" }, 500);
