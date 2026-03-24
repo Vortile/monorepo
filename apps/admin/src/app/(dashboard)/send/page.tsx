@@ -86,9 +86,9 @@ const SendPage = () => {
         phoneNumber: phoneNumber.trim(),
         messageBody: messageBody.trim(),
       });
-      
+
       const messageId = readString(response, "messageId") ?? "unknown";
-      
+
       setSendResult({
         type: "success",
         message: `Message sent via Gupshup V3 API! Message ID: ${messageId}`,
@@ -151,7 +151,8 @@ const SendPage = () => {
             WhatsApp Messaging
           </h1>
           <p className="max-w-3xl text-slate-600">
-            Send WhatsApp messages using Gupshup Partner API v3 (Meta Cloud API format).
+            Send WhatsApp messages using Gupshup Partner API v3 (Meta Cloud API
+            format).
           </p>
         </div>
 
@@ -162,7 +163,8 @@ const SendPage = () => {
             </Badge>
             <CardTitle className="text-3xl">Send Message</CardTitle>
             <CardDescription>
-              Send a text message through Gupshup Partner API v3 using Meta Cloud API format.
+              Send a text message through Gupshup Partner API v3 using Meta
+              Cloud API format.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -240,7 +242,8 @@ const SendPage = () => {
             <CardTitle className="text-3xl">Template Manager</CardTitle>
             <CardDescription>
               Note: Template creation should be done via Gupshup Partner Portal.
-              This endpoint is currently a placeholder for future implementation.
+              This endpoint is currently a placeholder for future
+              implementation.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

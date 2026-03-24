@@ -14,6 +14,7 @@
 - **Type Definitions**: Exported TypeScript types for all message types (text, image, document, template)
 
 **Key Features:**
+
 - Uses Meta Cloud API-compatible message format
 - Endpoint: `POST /partner/app/{appId}/v3/message`
 - Authentication: `Authorization` header with `GUPSHUP_PARTNER_TOKEN`
@@ -22,11 +23,13 @@
 #### 2. Route Handlers
 
 **`apps/server/src/routes/waba/waba.ts`**:
+
 - Updated `POST /api/waba/send-message` to use `sendTextMessage()`
 - Expects: `wabaId`, `phoneNumber`, `messageBody`
 - Returns: `messageId`, `status`, `contacts`
 
 **`apps/server/src/routes/waba/waba-onboarding.route.ts`**:
+
 - Updated `POST /api/waba/onboarding/send-message` to support full V3 API
 - Accepts multiple message types (text, template, image, document)
 - Uses Meta Cloud API format directly
@@ -36,6 +39,7 @@
 #### Updated Send Page (`apps/admin/src/app/(dashboard)/send/page.tsx`)
 
 **Changes:**
+
 - Added WABA ID input field with description
 - Updated phone number field with E.164 format guidance
 - Modified success message to show message ID returned from API
@@ -43,6 +47,7 @@
 - Template section now notes that creation should be done via Partner Portal
 
 **New Fields:**
+
 - WABA ID (with placeholder `waba_test_001`)
 - Phone number with E.164 format hint
 - Enhanced success/error feedback
@@ -52,6 +57,7 @@
 #### 1. New Documentation Files
 
 **`apps/server/docs/GUPSHUP_V3_API.md`** (NEW):
+
 - Comprehensive V3 API guide
 - Message type examples (text, template, image, document)
 - Implementation details with code snippets
@@ -61,6 +67,7 @@
 - Migration guide from V2 to V3
 
 **Updated Files:**
+
 - **`apps/server/docs/GUPSHUP_WABA_ONBOARDING.md`**: Added notice about V3 implementation
 - **`apps/server/README.md`**: Updated endpoints list and added V3 reference
 - **`/memories/repo/gupshup-quick-reference.md`**: Added V3 code patterns, deprecated V2 section
@@ -68,6 +75,7 @@
 ### ✅ API Contract
 
 #### Request Format (App-Level Route)
+
 ```json
 POST /api/waba/send-message
 {
@@ -78,6 +86,7 @@ POST /api/waba/send-message
 ```
 
 #### Response Format
+
 ```json
 {
   "success": true,
@@ -93,6 +102,7 @@ POST /api/waba/send-message
 ```
 
 #### Low-Level API Format (Onboarding Route)
+
 ```json
 POST /api/waba/onboarding/send-message
 {
@@ -159,11 +169,13 @@ GUPSHUP_WEBHOOK_VERIFY_TOKEN=your_webhook_secret
 **Critical**: Phone numbers MUST be in E.164 format **without the + sign**
 
 ✅ Correct:
+
 - `5511999887766` (Brazil)
 - `14155552671` (USA)
 - `919876543210` (India)
 
 ❌ Wrong:
+
 - `+55 11 99988-7766`
 - `+1 (415) 555-2671`
 - `+91 98765 43210`
@@ -171,6 +183,7 @@ GUPSHUP_WEBHOOK_VERIFY_TOKEN=your_webhook_secret
 ## Testing
 
 ### 1. Using Dashboard
+
 1. Navigate to `/send` in admin panel
 2. Enter WABA ID: `waba_test_001` (or your actual WABA ID)
 3. Enter phone number: `5511999887766` (your test number in E.164 format)
@@ -179,6 +192,7 @@ GUPSHUP_WEBHOOK_VERIFY_TOKEN=your_webhook_secret
 6. Check response for message ID
 
 ### 2. Using cURL
+
 ```bash
 curl -X POST http://localhost:3000/api/waba/send-message \
   -H "Content-Type: application/json" \
@@ -190,6 +204,7 @@ curl -X POST http://localhost:3000/api/waba/send-message \
 ```
 
 ### 3. Using Advanced API
+
 ```bash
 curl -X POST http://localhost:3000/api/waba/onboarding/send-message \
   -H "Content-Type: application/json" \
@@ -205,29 +220,32 @@ curl -X POST http://localhost:3000/api/waba/onboarding/send-message \
 ## Migration from V2 API
 
 ### Old Code (V2 - Deprecated)
+
 ```typescript
 await sendMessage({
   appId: "app-id",
   phoneNumber: "+1234567890",
   message: {
     type: "text",
-    text: "Hello"
-  }
+    text: "Hello",
+  },
 });
 ```
 
 ### New Code (V3 - Current)
+
 ```typescript
 await sendTextMessage({
   appId: "app-id",
-  to: "1234567890",  // No + sign
-  body: "Hello"
+  to: "1234567890", // No + sign
+  body: "Hello",
 });
 ```
 
 ## What's NOT Implemented (Future Work)
 
 ### 1. Message Persistence
+
 - No database table for tracking sent messages
 - No message history
 - No status tracking (sent, delivered, read, failed)
@@ -235,6 +253,7 @@ await sendTextMessage({
 **Recommendation**: Create `messages` table to store all sent/received messages
 
 ### 2. Webhook Processing
+
 - Webhook endpoints exist but handlers are stubs
 - No delivery receipt processing
 - No inbound message handling
@@ -243,6 +262,7 @@ await sendTextMessage({
 **Recommendation**: Implement webhook handlers in `waba-onboarding.route.ts`
 
 ### 3. Template Management
+
 - Template creation endpoint is a placeholder
 - No template listing API
 - No template approval status tracking
@@ -251,6 +271,7 @@ await sendTextMessage({
 **Recommendation**: Templates should be managed via Gupshup Partner Portal UI for now
 
 ### 4. Media Upload
+
 - No media upload endpoints
 - Images/documents must be hosted externally
 - No temporary file storage
@@ -258,6 +279,7 @@ await sendTextMessage({
 **Recommendation**: Implement media upload service with cloud storage (S3, R2, etc.)
 
 ### 5. Phone Number Management
+
 - No source phone number specification in API
 - Assumes single phone number per WABA
 - No phone number discovery/listing
@@ -265,6 +287,7 @@ await sendTextMessage({
 **Recommendation**: Add phone number selection to send message API
 
 ### 6. Advanced Features
+
 - No batch sending
 - No message scheduling
 - No rate limiting

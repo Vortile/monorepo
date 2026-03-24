@@ -204,13 +204,13 @@ export const registerManualOnboarding = async (
 /**
  * Send a message using Gupshup Partner API v3.
  * This uses Meta Cloud API format (passthrough) via Gupshup Partner Portal.
- * 
+ *
  * API Documentation:
  * - Endpoint: POST /partner/app/{APP_ID}/v3/message
  * - Postman: https://documenter.getpostman.com/view/27893553/2sAXqy1dtP
  * - Uses Meta Cloud API message format
  * - Authentication via Partner Token in Authorization header
- * 
+ *
  * @param input - Message data in Meta Cloud API format
  * @returns Message ID and delivery status
  */

@@ -28,6 +28,7 @@ Set these in apps/api/.env.local:
 ## Endpoints (current)
 
 ### Core
+
 - GET /api/health
 - GET /api/merchants/:clerkId
 - POST /api/merchants
@@ -35,6 +36,7 @@ Set these in apps/api/.env.local:
 - POST /api/stores
 
 ### WhatsApp (Gupshup V3 API)
+
 - POST /api/waba/send-message — Send text messages via Gupshup Partner API V3
 - POST /api/waba/create-template — Template creation (placeholder)
 - POST /api/waba/onboarding/register — Register manually onboarded WABA
@@ -45,6 +47,7 @@ Set these in apps/api/.env.local:
 **See**: [docs/GUPSHUP_V3_API.md](./docs/GUPSHUP_V3_API.md) for V3 API documentation
 
 ### Email
+
 - Email endpoints under /api/emails
 
 ## Data Model (high-level)

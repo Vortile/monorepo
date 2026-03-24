@@ -105,7 +105,7 @@ wabaOnboardingRoute.get("/app-details/:appId", async (c) => {
  * Send a message using Gupshup Partner API V3 (Meta Cloud API format).
  *
  * Request body examples:
- * 
+ *
  * Text message:
  * {
  *   "appId": "abc123-def456",
@@ -114,7 +114,7 @@ wabaOnboardingRoute.get("/app-details/:appId", async (c) => {
  *     "body": "Hello from our system!"
  *   }
  * }
- * 
+ *
  * Template message:
  * {
  *   "appId": "abc123-def456",
@@ -144,7 +144,8 @@ wabaOnboardingRoute.post("/send-message", async (c) => {
     if (!text && !template && !image && !document) {
       return c.json(
         {
-          error: "Missing message content: provide text, template, image, or document",
+          error:
+            "Missing message content: provide text, template, image, or document",
         },
         400,
       );
@@ -160,8 +161,8 @@ wabaOnboardingRoute.post("/send-message", async (c) => {
             ? { appId, to, image }
             : document
               ? { appId, to, document }
-              : { appId, to, text: { body: "" } } // Fallback (should never reach)
-    ) as SendMessageInput;
+              : { appId, to, text: { body: "" } }
+    ) as SendMessageInput; // Fallback (should never reach)
 
     // Send the message using V3 API
     const result = await sendMessageV3(messageInput);

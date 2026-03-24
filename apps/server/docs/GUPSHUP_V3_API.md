@@ -29,6 +29,7 @@ Content-Type: application/json
 ### 1. Text Message
 
 **Request:**
+
 ```json
 {
   "messaging_product": "whatsapp",
@@ -43,6 +44,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "messages": [
@@ -62,6 +64,7 @@ Content-Type: application/json
 ### 2. Template Message
 
 **Request:**
+
 ```json
 {
   "messaging_product": "whatsapp",
@@ -91,6 +94,7 @@ Content-Type: application/json
 ### 3. Image Message
 
 **Request:**
+
 ```json
 {
   "messaging_product": "whatsapp",
@@ -107,6 +111,7 @@ Content-Type: application/json
 ### 4. Document Message
 
 **Request:**
+
 ```json
 {
   "messaging_product": "whatsapp",
@@ -274,6 +279,7 @@ GUPSHUP_WEBHOOK_VERIFY_TOKEN=your_webhook_secret
 ## Phone Number Format
 
 Always use **E.164 format without the + sign**:
+
 - ✅ Correct: `5511999887766` (Brazil)
 - ✅ Correct: `14155552671` (USA)
 - ❌ Wrong: `+55 11 99988-7766`
@@ -284,6 +290,7 @@ Always use **E.164 format without the + sign**:
 Common error responses:
 
 ### Invalid Phone Number
+
 ```json
 {
   "error": {
@@ -294,6 +301,7 @@ Common error responses:
 ```
 
 ### Template Not Found
+
 ```json
 {
   "error": {
@@ -304,6 +312,7 @@ Common error responses:
 ```
 
 ### Rate Limit
+
 ```json
 {
   "error": {
@@ -318,6 +327,7 @@ Common error responses:
 File: `apps/admin/src/app/(dashboard)/send/page.tsx`
 
 The dashboard send page now includes:
+
 - **WABA ID field**: Internal database identifier
 - **Phone number field**: E.164 format recipient
 - **Message body**: Text content to send
@@ -365,23 +375,25 @@ curl -X POST http://localhost:3000/api/waba/onboarding/send-message \
 If you were using the old V2 API format:
 
 ### Old V2 Format
+
 ```typescript
 await sendMessage({
   appId: "app-id",
   phoneNumber: "+1234567890",
   message: {
     type: "text",
-    text: "Hello"
-  }
+    text: "Hello",
+  },
 });
 ```
 
 ### New V3 Format
+
 ```typescript
 await sendTextMessage({
   appId: "app-id",
   to: "1234567890", // No + sign
-  body: "Hello"
+  body: "Hello",
 });
 ```
 
@@ -395,16 +407,19 @@ await sendTextMessage({
 ## Troubleshooting
 
 ### "App not found" error
+
 - Verify `GUPSHUP_PARTNER_TOKEN` is valid
 - Check that App ID exists in Partner Portal
 - Ensure App ID is correctly stored in WABA credentials
 
 ### "Invalid phone number" error
+
 - Remove all formatting (spaces, dashes, parentheses)
 - Remove + sign from beginning
 - Use country code (e.g., 55 for Brazil, 1 for USA)
 
 ### "unauthorized" error
+
 - Check `GUPSHUP_PARTNER_TOKEN` environment variable
 - Regenerate token in Partner Portal if expired
 - Use `Authorization` header (not `token` like V2)
