@@ -1,120 +1,153 @@
 import { Hono } from "hono";
-import type { StatusCode } from "hono/utils/http-status";
-import { env } from "../../config/env";
-
-const GRAPH_API_VERSION = "v24.0";
-const META_WABA_ACCESS_TOKEN = env.META_WABA_ACCESS_TOKEN;
-const META_WABA_PHONE_NUMBER_ID = env.META_WABA_PHONE_NUMBER_ID;
-const META_WABA_ID = env.META_WABA_ID;
-
-type MessageType = "text" | "interactive" | "reaction" | "template";
-type MessageInteractionType =
-  | "text"
-  | "location_request_message"
-  | "address_message";
-
-type MessageBasePayload = {
-  to: string;
-  type: MessageType;
-  messaging_product: "whatsapp";
-};
-type MessagePayload = MessageBasePayload &
-  (
-    | {
-        type: "text";
-        text: {
-          preview_url?: boolean;
-          body: string;
-        };
-      }
-    | {
-        type: "interactive";
-        interactive: {
-          type: MessageInteractionType;
-          body: {
-            text: string;
-          };
-        };
-      }
-  );
+import {
+  getWabasByMerchantId,
+  getWabaCredentialByType,
+} from "../../db/queries/waba.queries";
+import { sendTextMessage } from "../../services/waba/waba-onboarding.service";
 
 const wabaRoute = new Hono();
 
-wabaRoute.post("/send-message", async (c) => {
-  const { phoneNumber, messageBody } = await c.req.json();
-
-  if (!phoneNumber || !messageBody) {
-    return c.json({ error: "phoneNumber and messageBody are required" }, 400);
-  }
-
-  console.log(`Sending WhatsApp text to ${phoneNumber}`);
-
+// Get all WABAs for a merchant
+wabaRoute.get("/", async (c) => {
   try {
-    const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${META_WABA_PHONE_NUMBER_ID}/messages`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${META_WABA_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "text",
-        text: { body: messageBody },
-      } satisfies MessagePayload),
-    });
-    console.log("Response from meta:", response);
+    // TODO: Get merchantId from auth session
+    const merchantId = "mrc_test_001";
 
-    const data = await response.json();
-    c.status(response.status as StatusCode);
-    return c.json(data);
+    const wabas = await getWabasByMerchantId(merchantId);
+
+    return c.json({
+      success: true,
+      data: wabas,
+    });
   } catch (error) {
-    console.error(error);
-    return c.json({ error: "Failed to send message" }, 500);
+    console.error("Error fetching WABAs:", error);
+    return c.json({ error: "Failed to fetch WABAs" }, 500);
   }
 });
 
-wabaRoute.post("/create-template", async (c) => {
-  const { templateName, category, bodyText } = await c.req.json();
+wabaRoute.post("/send-message", async (c) => {
+  // V3 API: Send a text message via Gupshup Partner API
+  const { wabaId, phoneNumber, messageBody } = await c.req.json();
 
-  if (!templateName || !category || !bodyText) {
+  if (!wabaId || !phoneNumber || !messageBody) {
     return c.json(
-      { error: "templateName, category, and bodyText are required" },
+      { error: "wabaId, phoneNumber and messageBody are required" },
       400,
     );
   }
 
-  console.log(`Creating template ${templateName}`);
+  console.log(`[V3] Sending WhatsApp text to ${phoneNumber} via WABA ${wabaId}`);
 
   try {
-    const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${META_WABA_ID}/message_templates`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${META_WABA_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify({
-        name: templateName,
-        category,
-        language: "pt_BR",
-        components: [
-          {
-            type: "BODY",
-            text: bodyText,
-          },
-        ],
-      }),
-    });
-    console.log("Response from meta:", response);
+    // Get WABA metadata to find the Gupshup app ID
+    const appMetadata = await getWabaCredentialByType(wabaId, "app_metadata");
 
-    const data = await response.json();
-    c.status(response.status as StatusCode);
-    return c.json(data);
+    if (!appMetadata || !appMetadata.metadata) {
+      return c.json(
+        { error: "WABA not properly configured. Missing app metadata." },
+        400,
+      );
+    }
+
+    const metadata = JSON.parse(appMetadata.metadata);
+    const gupshupAppId = metadata.gupshupAppId;
+
+    if (!gupshupAppId) {
+      return c.json(
+        { error: "WABA not properly configured. Missing Gupshup App ID." },
+        400,
+      );
+    }
+
+    // Send message via Gupshup V3 API (Meta Cloud API format)
+    const result = await sendTextMessage({
+      appId: gupshupAppId,
+      to: phoneNumber,
+      body: messageBody,
+    });
+
+    return c.json({
+      success: true,
+      messageId: result.messageId,
+      status: result.status,
+      contacts: result.contacts,
+    });
   } catch (error) {
-    console.error(error);
-    return c.json({ error: "Failed to create template" }, 500);
+    console.error("Error sending message via Gupshup V3:", error);
+    return c.json(
+      {
+        error: "Failed to send message",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500,
+    );
+  }
+});
+
+wabaRoute.post("/create-template", async (c) => {
+  const {
+    wabaId,
+    templateName,
+    category,
+    bodyText,
+    language = "en",
+  } = await c.req.json();
+
+  if (!wabaId || !templateName || !category || !bodyText) {
+    return c.json(
+      { error: "wabaId, templateName, category, and bodyText are required" },
+      400,
+    );
+  }
+
+  console.log(`Creating template ${templateName} for WABA ${wabaId}`);
+
+  try {
+    // Get WABA metadata to find the Gupshup app ID
+    const appMetadata = await getWabaCredentialByType(wabaId, "app_metadata");
+
+    if (!appMetadata || !appMetadata.metadata) {
+      return c.json(
+        { error: "WABA not properly configured. Missing app metadata." },
+        400,
+      );
+    }
+
+    const metadata = JSON.parse(appMetadata.metadata);
+    const gupshupAppId = metadata.gupshupAppId;
+
+    if (!gupshupAppId) {
+      return c.json(
+        { error: "WABA not properly configured. Missing Gupshup App ID." },
+        400,
+      );
+    }
+
+    // TODO: Implement template creation via Gupshup Partner API
+    // For now, return a message that templates should be created via Gupshup Partner Portal
+    return c.json(
+      {
+        message: "Template creation should be done via Gupshup Partner Portal",
+        partnerPortalUrl: "https://partner.gupshup.io",
+        templateData: {
+          appId: gupshupAppId,
+          templateName,
+          category,
+          bodyText,
+          language,
+        },
+      },
+      501, // Not Implemented
+    );
+  } catch (error) {
+    console.error("Error creating template:", error);
+    return c.json(
+      {
+        error: "Failed to create template",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500,
+    );
   }
 });
 

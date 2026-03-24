@@ -7,6 +7,7 @@ import {
   IconMessageCircle,
   IconPlus,
   IconDeviceMobile,
+  IconApps,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -26,7 +27,8 @@ const navMain = [
   { title: "Dashboard", url: "/", icon: IconDashboard },
   { title: "Compose Email", url: "/compose", icon: IconPlus },
   { title: "WhatsApp Templates", url: "/send", icon: IconMessageCircle },
-  { title: "Register WABA", url: "/waba/register", icon: IconDeviceMobile },
+  { title: "WABA Connections", url: "/waba", icon: IconDeviceMobile },
+  { title: "Partner Apps", url: "/waba/partner-apps", icon: IconApps },
 ];
 
 export const AppSidebar = ({

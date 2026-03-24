@@ -1,62 +1,116 @@
-# Vortile Delivery Monorepo
+# Vortile Monorepo
 
-## Apps & Port Allocation
+A pnpm + Turborepo monorepo for managing merchant communications through WhatsApp Business API (WABA) and email.
 
-- **`apps/server`** (API): Hono + TypeScript backend server.
-  - **Port**: `3000`
-  - **Dev**: `pnpm dev:api`
-  - **Purpose**: Handles all business logic, database interactions, and API requests.
-  
-- **`apps/admin`**: Admin Dashboard (Next.js 16).
-  - **Port**: `3001`
-  - **Dev**: `pnpm dev:admin`
-  - **Purpose**: Internal tool for Vortile owners to manage the platform.
-  
-- **`apps/merchant-expo`**: React Native (Expo) app for merchants.
-  - **Purpose**: Mobile app for restaurant owners to manage their store, menu, and orders.
-  
-- **`apps/storefront`**: Next.js 16 customer-facing store.
-  - **Port**: `3003`
-  - **Dev**: `pnpm dev:storefront`
-  - **Purpose**: Dynamic online store for end-customers to place orders.
+## Applications
 
-## Architecture
+### apps/server
 
-- **apps/storefront**: Next.js application for customers (Client).
-- **apps/server**: Hono application for backend services and Authentication (Server).
-- **packages/database**: Shared Drizzle ORM + Neon DB package.
+**Hono.js API Server** - Port `3000`
 
-## Authentication
+The backend API server that handles all business logic, database interactions, and third-party integrations.
 
-Authentication is handled centrally by `apps/server` using **Better Auth**.
+**Key Features:**
 
-- The server exposes auth endpoints at `/api/auth/*`.
-- The Storefront uses the Better Auth client to communicate with the server.
+- RESTful API endpoints for all client apps
+- WABA (WhatsApp Business API) integration and management
+- Email handling via Resend
+- Merchant and account management
+- Better Auth authentication (future)
 
-## Database
+**Main Routes:**
 
-The project uses **Neon** (Serverless Postgres) and **Drizzle ORM**.
-Schema definitions are in `packages/database/src/schema.ts`.
+- `/api/health` - Health check
+- `/api/merchants` - Merchant CRUD operations
+- `/api/waba` - WABA messaging and management
+- `/api/waba/onboarding` - WABA account onboarding flow
+- `/api/emails` - Email operations
 
-### ID System
+**Run:**
 
-We use **UUID v7** for all primary keys. This ensures:
+```bash
+pnpm dev:server
+```
 
-- **Time-sortability**: Records are naturally ordered by creation time.
-- **Performance**: Better indexing than random UUIDs.
-- **Uniqueness**: Globally unique identifiers.
+### apps/admin
 
-Use the `generateId()` utility from `@vortile/database` when you need to generate an ID manually.
+**Next.js 16 Admin Dashboard** - Port `3001`
 
-## Tech Stack & Rules
+Internal dashboard for Vortile platform administrators to manage merchants, WABA accounts, email campaigns, and view analytics.
 
-- **Package Manager**: `pnpm` ONLY.
-- **Frontend**: Next.js 16 (App Router), Tailwind CSS v4 (no config file).
-- **Admin**: Next.js 16 (App Router), shadcn/ui, Clerk Auth.
-- **Backend**: Hono.js, TypeScript.
-- **Linting**: Global ESLint configuration (root `eslint.config.mjs`).
-- **Formatting**: Prettier with Tailwind plugin.
-- **Boilerplate**: Minimal. No unnecessary files.
+**Key Features:**
+
+- Merchant account management
+- WABA registration and configuration
+- Email composition and sending
+- Message history and analytics
+- Dashboard with statistics
+
+**Tech Stack:**
+
+- Next.js 16 (App Router, no `src` directory)
+- shadcn/ui components
+- Tailwind CSS v4
+- React Hook Form + Zod validation
+
+**Run:**
+
+```bash
+pnpm dev:admin
+```
+
+## Packages
+
+### packages/database
+
+**Shared Drizzle ORM Package**
+
+Centralized database schema definitions and utilities using Drizzle ORM with Neon (Serverless Postgres).
+
+**Schema Organization:**
+
+All schemas are located in `packages/database/src/schema/` and organized by domain:
+
+**`merchants/`**
+
+- `merchant.schema.ts` - Business entities and profiles
+
+**`messaging/`**
+
+- `waba.schema.ts` - WhatsApp Business Accounts
+- `waba-phone-number.schema.ts` - Phone numbers associated with WABA accounts
+- `waba-template.schema.ts` - Message templates for WABA
+- `waba-webhook.schema.ts` - Webhook configurations for WABA events
+- `waba-credential.schema.ts` - API credentials and tokens for WABA providers
+
+**Naming Convention:**
+Schema files must be named `[table-name].schema.ts`
+
+**ID System:**
+All tables use **UUID v7** for primary keys, providing:
+
+- Time-based sortability
+- Better index performance than random UUIDs
+- Global uniqueness
+
+Use `generateId()` from `@vortile/database/ids` to manually generate IDs.
+
+**Database Commands:**
+
+```bash
+pnpm db:generate  # Generate migrations
+pnpm db:push      # Push schema to database
+```
+
+## Tech Stack
+
+- **Package Manager**: pnpm (workspaces) + Turborepo
+- **Backend**: Hono.js, TypeScript
+- **Frontend**: Next.js 16 (App Router), shadcn/ui
+- **Database**: Neon (Serverless Postgres) + Drizzle ORM
+- **Styling**: Tailwind CSS v4
+- **Linting**: ESLint (root `eslint.config.mjs`)
+- **Formatting**: Prettier with Tailwind plugin
 
 ## Development
 
@@ -69,6 +123,19 @@ pnpm dev
 Run specific applications:
 
 ```bash
-pnpm dev:api
-pnpm dev:storefront
+pnpm dev:server
+pnpm dev:admin
+```
+
+Build all:
+
+```bash
+pnpm build
+```
+
+Build specific apps:
+
+```bash
+pnpm build:server
+pnpm build:admin
 ```

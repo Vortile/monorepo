@@ -1,5 +1,10 @@
 # Gupshup WABA Onboarding Guide
 
+> **⚠️ IMPLEMENTATION UPDATE (March 2024)**: 
+> We have implemented **Gupshup Partner API V3**, which uses Meta Cloud API format via Gupshup's passthrough layer.
+> See [GUPSHUP_V3_API.md](./GUPSHUP_V3_API.md) for the current V3 implementation guide.
+> This document provides historical context and general WABA onboarding information.
+
 ## Table of Contents
 
 1. [Overview](#overview)

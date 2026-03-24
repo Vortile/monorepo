@@ -27,13 +27,24 @@ Set these in apps/api/.env.local:
 
 ## Endpoints (current)
 
+### Core
 - GET /api/health
 - GET /api/merchants/:clerkId
 - POST /api/merchants
 - GET /api/stores?merchantId=...
 - POST /api/stores
-- POST /api/waba/send-message
-- POST /api/waba/create-template
+
+### WhatsApp (Gupshup V3 API)
+- POST /api/waba/send-message — Send text messages via Gupshup Partner API V3
+- POST /api/waba/create-template — Template creation (placeholder)
+- POST /api/waba/onboarding/register — Register manually onboarded WABA
+- GET /api/waba/onboarding/app-details/:appId — Get Gupshup app details
+- POST /api/waba/onboarding/send-message — V3 API with full message type support
+- POST /api/waba/onboarding/webhook — Webhook receiver
+
+**See**: [docs/GUPSHUP_V3_API.md](./docs/GUPSHUP_V3_API.md) for V3 API documentation
+
+### Email
 - Email endpoints under /api/emails
 
 ## Data Model (high-level)

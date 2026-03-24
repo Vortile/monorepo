@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import {
   registerManualOnboarding,
   getAppDetails,
-  sendMessage,
+  sendMessageV3,
   listAllApps,
   deleteApp,
+  type SendMessageInput,
 } from "../../services/waba/waba-onboarding.service";
 import { env } from "../../config/env";
 
@@ -101,46 +102,76 @@ wabaOnboardingRoute.get("/app-details/:appId", async (c) => {
 /**
  * POST /waba/onboarding/send-message
  *
- * Send a message using Gupshup's native Partner API.
+ * Send a message using Gupshup Partner API V3 (Meta Cloud API format).
  *
- * Request body:
+ * Request body examples:
+ * 
+ * Text message:
  * {
  *   "appId": "abc123-def456",
- *   "phoneNumber": "+1234567890",
- *   "message": {
- *     "type": "text",
- *     "text": "Hello from our system!"
+ *   "to": "+1234567890",
+ *   "text": {
+ *     "body": "Hello from our system!"
+ *   }
+ * }
+ * 
+ * Template message:
+ * {
+ *   "appId": "abc123-def456",
+ *   "to": "+1234567890",
+ *   "template": {
+ *     "name": "hello_world",
+ *     "language": { "code": "en" }
  *   }
  * }
  */
 wabaOnboardingRoute.post("/send-message", async (c) => {
   try {
     const body = await c.req.json();
-    const { appId, phoneNumber, message } = body;
+    const { appId, to, text, template, image, document } = body;
 
     // Validate required fields
-    if (!appId || !phoneNumber || !message) {
+    if (!appId || !to) {
       return c.json(
         {
-          error: "Missing required fields: appId, phoneNumber, message",
+          error: "Missing required fields: appId, to",
         },
         400,
       );
     }
 
-    // Send the message
-    const result = await sendMessage({
-      appId,
-      phoneNumber,
-      message,
-    });
+    // Validate that at least one message type is provided
+    if (!text && !template && !image && !document) {
+      return c.json(
+        {
+          error: "Missing message content: provide text, template, image, or document",
+        },
+        400,
+      );
+    }
+
+    // Build message input based on message type
+    const messageInput: SendMessageInput = (
+      text
+        ? { appId, to, text }
+        : template
+          ? { appId, to, template }
+          : image
+            ? { appId, to, image }
+            : document
+              ? { appId, to, document }
+              : { appId, to, text: { body: "" } } // Fallback (should never reach)
+    ) as SendMessageInput;
+
+    // Send the message using V3 API
+    const result = await sendMessageV3(messageInput);
 
     return c.json({
       success: true,
       data: result,
     });
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error("Error sending message (V3):", error);
     return c.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",

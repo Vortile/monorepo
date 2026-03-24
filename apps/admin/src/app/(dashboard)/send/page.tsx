@@ -51,6 +51,7 @@ const postJson = async (
 };
 
 const SendPage = () => {
+  const [wabaId, setWabaId] = useState("waba_test_001"); // TODO: Replace with actual WABA selection
   const [phoneNumber, setPhoneNumber] = useState("");
   const [messageBody, setMessageBody] = useState("");
   const [sendResult, setSendResult] = useState<ResultState>(null);
@@ -80,13 +81,17 @@ const SendPage = () => {
     setSendResult(null);
     setIsSending(true);
     try {
-      await postJson("/waba/send-message", {
+      const response = await postJson("/waba/send-message", {
+        wabaId: wabaId,
         phoneNumber: phoneNumber.trim(),
         messageBody: messageBody.trim(),
       });
+      
+      const messageId = readString(response, "messageId") ?? "unknown";
+      
       setSendResult({
         type: "success",
-        message: "Message Sent via WhatsApp Cloud API",
+        message: `Message sent via Gupshup V3 API! Message ID: ${messageId}`,
       });
     } catch (error) {
       setSendResult({
@@ -104,6 +109,7 @@ const SendPage = () => {
     setIsCreatingTemplate(true);
     try {
       const data = await postJson("/waba/create-template", {
+        wabaId: wabaId,
         templateName: templateName.trim(),
         category,
         bodyText: bodyText.trim(),
@@ -139,37 +145,53 @@ const SendPage = () => {
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:px-8">
         <div className="space-y-3">
           <Badge variant="secondary" className="tracking-[0.25em] uppercase">
-            Send
+            Send (V3)
           </Badge>
           <h1 className="text-4xl font-black sm:text-5xl">
-            Live Chat & Templates
+            WhatsApp Messaging
           </h1>
           <p className="max-w-3xl text-slate-600">
-            Trigger WhatsApp Cloud API messages and submit templates for review.
+            Send WhatsApp messages using Gupshup Partner API v3 (Meta Cloud API format).
           </p>
         </div>
 
         <Card>
           <CardHeader className="space-y-2">
             <Badge variant="secondary" className="tracking-[0.2em] uppercase">
-              WhatsApp Cloud +{" "}
+              Gupshup V3 API
             </Badge>
-            <CardTitle className="text-3xl">Live Chat Debugger</CardTitle>
+            <CardTitle className="text-3xl">Send Message</CardTitle>
             <CardDescription>
-              Send a message through the WhatsApp Cloud API and capture both the
-              trigger and delivery for Meta review.
+              Send a text message through Gupshup Partner API v3 using Meta Cloud API format.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-6">
               <div className="space-y-2">
+                <Label>WABA ID</Label>
+                <Input
+                  type="text"
+                  placeholder="waba_test_001"
+                  value={wabaId}
+                  onChange={(event) => setWabaId(event.target.value)}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-slate-500">
+                  Internal WABA identifier from your database
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Destination Phone Number</Label>
                 <Input
                   type="tel"
-                  placeholder="55XXXXXXXXXX"
+                  placeholder="5511999887766"
                   value={phoneNumber}
                   onChange={(event) => setPhoneNumber(event.target.value)}
                 />
+                <p className="text-xs text-slate-500">
+                  E.164 format without + sign (e.g., 5511999887766)
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -213,12 +235,12 @@ const SendPage = () => {
         <Card className="border-slate-200 bg-white">
           <CardHeader className="space-y-2">
             <Badge variant="secondary" className="tracking-[0.2em] uppercase">
-              Templates
+              Templates (Partner Portal)
             </Badge>
             <CardTitle className="text-3xl">Template Manager</CardTitle>
             <CardDescription>
-              Register a brand-new message template, capture the API call, and
-              showcase the status returned by Meta.
+              Note: Template creation should be done via Gupshup Partner Portal.
+              This endpoint is currently a placeholder for future implementation.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

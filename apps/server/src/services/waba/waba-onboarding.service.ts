@@ -36,22 +36,69 @@ type GupshupAppDetails = {
   namespace: string;
 };
 
-type SendMessageInput = {
+/**
+ * V3 API Input Types - Meta Cloud API Format via Gupshup Partner API
+ */
+export type SendTextMessageInput = {
   appId: string;
-  phoneNumber: string; // Recipient's phone number
-  message: {
-    type: "text" | "image" | "document" | "template";
-    text?: string;
-    templateId?: string;
-    templateParams?: string[];
-    mediaUrl?: string;
+  to: string; // Recipient's phone number in E.164 format
+  text: {
+    preview_url?: boolean;
+    body: string;
+  };
+};
+
+export type SendImageMessageInput = {
+  appId: string;
+  to: string;
+  image: {
+    link?: string;
+    id?: string;
     caption?: string;
   };
 };
 
-type SendMessageResult = {
+export type SendDocumentMessageInput = {
+  appId: string;
+  to: string;
+  document: {
+    link?: string;
+    id?: string;
+    caption?: string;
+    filename?: string;
+  };
+};
+
+export type SendTemplateMessageInput = {
+  appId: string;
+  to: string;
+  template: {
+    name: string;
+    language: {
+      code: string;
+    };
+    components?: Array<{
+      type: string;
+      parameters: Array<{
+        type: string;
+        text?: string;
+        image?: { link: string };
+        document?: { link: string };
+      }>;
+    }>;
+  };
+};
+
+export type SendMessageInput =
+  | SendTextMessageInput
+  | SendImageMessageInput
+  | SendDocumentMessageInput
+  | SendTemplateMessageInput;
+
+export type SendMessageResult = {
   messageId: string;
-  status: string;
+  status?: string;
+  contacts?: Array<{ input: string; wa_id: string }>;
 };
 
 /**
@@ -155,72 +202,53 @@ export const registerManualOnboarding = async (
 };
 
 /**
- * Send a message using Gupshup's native Partner API (v2).
- * This uses Gupshup's native format, NOT Meta passthrough.
- * See: https://partner-docs.gupshup.io/reference/post_partner-app-appid-template-msg
- *
- * Why native API over passthrough:
- * - Simpler (one abstraction layer)
- * - Partner-optimized features
- * - Consistent with webhook format
- * - Better error handling
+ * Send a message using Gupshup Partner API v3.
+ * This uses Meta Cloud API format (passthrough) via Gupshup Partner Portal.
+ * 
+ * API Documentation:
+ * - Endpoint: POST /partner/app/{APP_ID}/v3/message
+ * - Postman: https://documenter.getpostman.com/view/27893553/2sAXqy1dtP
+ * - Uses Meta Cloud API message format
+ * - Authentication via Partner Token in Authorization header
+ * 
+ * @param input - Message data in Meta Cloud API format
+ * @returns Message ID and delivery status
  */
-export const sendMessage = async (
+export const sendMessageV3 = async (
   input: SendMessageInput,
 ): Promise<SendMessageResult> => {
-  const { appId, phoneNumber, message } = input;
+  const { appId, to } = input;
 
-  let endpoint = "";
-  let body: Record<string, unknown> = {};
+  // Build message body in Meta Cloud API format
+  const body: Record<string, unknown> = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+  };
 
-  switch (message.type) {
-    case "text":
-      // For simple text messages, use session message API
-      endpoint = `/partner/app/${appId}/msg`;
-      body = {
-        channel: "whatsapp",
-        destination: phoneNumber,
-        message: message.text,
-        "src.name": appId,
-      };
-      break;
-
-    case "template":
-      // For template messages with ID
-      endpoint = `/partner/app/${appId}/template/msg`;
-      body = {
-        destination: phoneNumber,
-        template: JSON.stringify({
-          id: message.templateId,
-          params: message.templateParams || [],
-        }),
-      };
-      break;
-
-    case "image":
-    case "document":
-      // For media messages
-      endpoint = `/partner/app/${appId}/msg`;
-      body = {
-        channel: "whatsapp",
-        destination: phoneNumber,
-        message: {
-          type: message.type,
-          url: message.mediaUrl,
-          caption: message.caption,
-        },
-        "src.name": appId,
-      };
-      break;
-
-    default:
-      throw new Error(`Unsupported message type: ${message.type}`);
+  // Determine message type and add type-specific fields
+  if ("text" in input) {
+    body.type = "text";
+    body.text = input.text;
+  } else if ("image" in input) {
+    body.type = "image";
+    body.image = input.image;
+  } else if ("document" in input) {
+    body.type = "document";
+    body.document = input.document;
+  } else if ("template" in input) {
+    body.type = "template";
+    body.template = input.template;
+  } else {
+    throw new Error("Invalid message input: no message type specified");
   }
+
+  const endpoint = `/partner/app/${appId}/v3/message`;
 
   const response = await fetch(`${env.GUPSHUP_PARTNER_API_URL}${endpoint}`, {
     method: "POST",
     headers: {
-      token: env.GUPSHUP_PARTNER_TOKEN,
+      Authorization: env.GUPSHUP_PARTNER_TOKEN,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
@@ -229,16 +257,71 @@ export const sendMessage = async (
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Failed to send message: ${response.status} - ${errorText}`,
+      `Failed to send message (v3): ${response.status} - ${errorText}`,
     );
   }
 
   const data = await response.json();
+
+  // Extract message ID from response
+  // Meta Cloud API format: { messages: [{ id: "..." }] }
+  const messages = Array.isArray(data.messages) ? data.messages : [];
+  const messageId = messages[0]?.id || data.messageId || "unknown";
+
   return {
-    messageId: data.messageId || data.response?.id,
+    messageId,
     status: data.status,
+    contacts: data.contacts,
   };
 };
+
+/**
+ * Convenience function to send a text message
+ */
+export const sendTextMessage = async (params: {
+  appId: string;
+  to: string;
+  body: string;
+  previewUrl?: boolean;
+}): Promise<SendMessageResult> =>
+  sendMessageV3({
+    appId: params.appId,
+    to: params.to,
+    text: {
+      body: params.body,
+      preview_url: params.previewUrl,
+    },
+  });
+
+/**
+ * Convenience function to send a template message
+ */
+export const sendTemplateMessage = async (params: {
+  appId: string;
+  to: string;
+  templateName: string;
+  languageCode: string;
+  components?: Array<{
+    type: string;
+    parameters: Array<{
+      type: string;
+      text?: string;
+      image?: { link: string };
+      document?: { link: string };
+    }>;
+  }>;
+}): Promise<SendMessageResult> =>
+  sendMessageV3({
+    appId: params.appId,
+    to: params.to,
+    template: {
+      name: params.templateName,
+      language: {
+        code: params.languageCode,
+      },
+      components: params.components,
+    },
+  });
 
 /**
  * Subscribe to webhooks for a specific app.
