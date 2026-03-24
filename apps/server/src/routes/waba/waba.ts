@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import {
+  getAllWabas,
   getWabasByMerchantId,
   getWabaCredentialByType,
 } from "../../db/queries/waba.queries";
@@ -7,13 +8,15 @@ import { sendTextMessage } from "../../services/waba/waba-onboarding.service";
 
 const wabaRoute = new Hono();
 
-// Get all WABAs for a merchant
+// Get all WABAs (admin view)
+// Optional query param: ?merchantId=xxx to filter by merchant
 wabaRoute.get("/", async (c) => {
   try {
-    // TODO: Get merchantId from auth session
-    const merchantId = "mrc_test_001";
+    const merchantId = c.req.query("merchantId");
 
-    const wabas = await getWabasByMerchantId(merchantId);
+    const wabas = merchantId 
+      ? await getWabasByMerchantId(merchantId)
+      : await getAllWabas();
 
     return c.json({
       success: true,
@@ -36,9 +39,7 @@ wabaRoute.post("/send-message", async (c) => {
     );
   }
 
-  console.log(
-    `[V3] Sending WhatsApp text to ${phoneNumber} via WABA ${wabaId}`,
-  );
+  console.log(`[V3] Sending WhatsApp text to ${phoneNumber} via WABA ${wabaId}`);
 
   try {
     // Get WABA metadata to find the Gupshup app ID

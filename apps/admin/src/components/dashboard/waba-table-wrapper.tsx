@@ -27,6 +27,7 @@ import {
 type WabaConnection = {
   id: string;
   name: string | null;
+  merchantName: string | null;
   provider: string;
   providerAccountId: string | null;
   status: string;
@@ -70,6 +71,7 @@ export const WabaTableWrapper = ({ data }: WabaTableWrapperProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Merchant</TableHead>
                 <TableHead>Provider</TableHead>
                 <TableHead>Account ID</TableHead>
                 <TableHead>Status</TableHead>
@@ -81,7 +83,7 @@ export const WabaTableWrapper = ({ data }: WabaTableWrapperProps) => {
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     No WABA connections found.
                   </TableCell>
                 </TableRow>
@@ -90,6 +92,9 @@ export const WabaTableWrapper = ({ data }: WabaTableWrapperProps) => {
                   <TableRow key={waba.id}>
                     <TableCell className="font-medium">
                       {waba.name || "Unnamed WABA"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {waba.merchantName || "Unknown Merchant"}
                     </TableCell>
                     <TableCell className="capitalize">
                       {waba.provider}

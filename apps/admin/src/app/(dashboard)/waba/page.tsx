@@ -9,6 +9,7 @@ const API_BASE = (
 type WabaResponse = {
   id: string;
   merchantId: string;
+  merchantName: string | null;
   provider: string;
   providerAccountId: string | null;
   providerAppId: string | null;
@@ -45,6 +46,7 @@ const fetchWabas = async () => {
     return list.map((waba) => ({
       id: waba.id,
       name: waba.name,
+      merchantName: waba.merchantName,
       provider: waba.provider,
       providerAccountId: waba.providerAccountId,
       status: waba.status,

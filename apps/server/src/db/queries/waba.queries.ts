@@ -1,5 +1,19 @@
-import { db, eq, and } from "@vortile/database";
-import { waba, wabaCredential, wabaPhoneNumber } from "@vortile/database";
+import { db, eq, and, getTableColumns } from "@vortile/database";
+import { waba, wabaCredential, wabaPhoneNumber, merchant } from "@vortile/database";
+
+/**
+ * Get all WABAs across all merchants (admin view, excludes soft-deleted).
+ * Includes merchant name for admin display.
+ */
+export const getAllWabas = async () =>
+  await db
+    .select({
+      ...getTableColumns(waba),
+      merchantName: merchant.name,
+    })
+    .from(waba)
+    .leftJoin(merchant, eq(waba.merchantId, merchant.id))
+    .where(eq(waba.isDeleted, false));
 
 /**
  * Get all WABAs for a merchant (excludes soft-deleted).
