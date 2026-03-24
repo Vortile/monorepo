@@ -1,5 +1,4 @@
-import { db } from "@vortile/database";
-import { merchant } from "@vortile/database/src/schema";
+import { db, merchant } from "@vortile/database";
 import { slugify } from "../utils/slug";
 
 type CreateMerchantInput = {
