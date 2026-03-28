@@ -1,4 +1,4 @@
-import { db } from "@vortile/database";
+import { db, eq } from "@vortile/database";
 import { email, emailAttachment } from "@vortile/database";
 import { generateId } from "../../lib/id-generator";
 
@@ -103,4 +103,14 @@ export const createEmailWithAttachments = async (
   }
 
   return emailId;
+};
+
+/**
+ * Update the status (lastEvent) of an existing email
+ */
+export const updateEmailStatus = async (resendId: string, status: string) => {
+  await db
+    .update(email)
+    .set({ lastEvent: status, updatedAt: new Date() })
+    .where(eq(email.resendId, resendId));
 };

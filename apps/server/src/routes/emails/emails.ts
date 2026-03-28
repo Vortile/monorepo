@@ -8,6 +8,7 @@ import {
   getEmailByResendIdOrId,
   getEmailAttachmentsByEmailId,
 } from "../../db/queries/email.queries";
+import { createEmail } from "../../db/mutations/email.mutations";
 
 const emailsRoute = new Hono();
 
@@ -61,16 +62,43 @@ emailsRoute.post("/send", async (c) => {
       return c.json({ error: "Missing required fields" }, 400);
     }
 
+    const toArray = Array.isArray(to)
+      ? to
+      : typeof to === "string"
+        ? to.split(",").map((e) => e.trim())
+        : [to];
+
     const resend = getResend();
     const { data, error } = await resend.emails.send({
       from: fromAddress,
-      to: [to],
+      to: toArray,
       subject,
       text: message,
     });
 
     if (error) {
-      return c.json({ error }, 500);
+      console.error("Resend send error:", error);
+      return c.json(
+        { error: error.message || "Failed to send email via Resend" },
+        500,
+      );
+    }
+
+    if (data?.id) {
+      // Create the email in the DB since sent emails don't come through the inbound webhook
+      await createEmail({
+        resendId: data.id,
+        direction: "sent",
+        from: fromAddress,
+        to: toArray,
+        subject,
+        text: message,
+        lastEvent: "sent",
+        resendCreatedAt: new Date(),
+      }).catch((dbError) => {
+        console.error("Failed to store sent email in database:", dbError);
+        // We don't fail the request if DB insertion fails since the email was sent
+      });
     }
 
     return c.json(data);
@@ -139,7 +167,10 @@ emailsRoute.delete("/:id", async (c) => {
 
     if (error) {
       console.error("Resend cancel error:", error);
-      return c.json({ error }, 500);
+      return c.json(
+        { error: error.message || "Failed to cancel email via Resend" },
+        500,
+      );
     }
 
     return c.json({ data });

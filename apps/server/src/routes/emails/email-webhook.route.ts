@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { env } from "../../config/env";
 import {
   createEmailWithAttachments,
+  updateEmailStatus,
   type CreateEmailInput,
   type CreateEmailAttachmentInput,
 } from "../../db/mutations/email.mutations";
@@ -209,13 +210,14 @@ const handleEmailStatusUpdate = async (type: string, data: ResendEmailData) => {
 
     const status = statusMap[type];
 
+    if (!status) {
+      console.warn(`Unknown email status type: ${type}`);
+      return;
+    }
+
     console.log(`Email status update: ${data.id} -> ${status}`);
 
-    // TODO: Update email status in database
-    // You can implement this by:
-    // 1. Finding the email by resendId
-    // 2. Updating the lastEvent field
-    // For now, we just log it
+    await updateEmailStatus(data.id, status);
   } catch (error) {
     console.error("Error handling email status update:", error);
     throw error;
