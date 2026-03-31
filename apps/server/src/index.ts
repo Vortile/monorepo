@@ -28,6 +28,11 @@ app.route("/api/emails", emailsRoute);
 app.route("/api/merchants", merchantsRoute);
 
 const port = env.PORT;
-console.log(`Server running on http://localhost:${port}`);
 
-serve({ fetch: app.fetch, port });
+// Local dev only — Vercel uses the default export
+if (!process.env.VERCEL) {
+  console.log(`Server running on http://localhost:${port}`);
+  serve({ fetch: app.fetch, port });
+}
+
+export default app;
