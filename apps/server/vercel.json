@@ -1,0 +1,3 @@
+{
+  "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && turbo run build --filter=server..."
+}
