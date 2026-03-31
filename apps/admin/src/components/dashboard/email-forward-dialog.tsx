@@ -52,7 +52,7 @@ export const EmailForwardDialog = ({
 
   const handleForward = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !forwardTo.trim()) return;
+    if (!email?.resendId || !forwardTo.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -63,15 +63,17 @@ export const EmailForwardDialog = ({
         process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000"
       ).replace(/\/$/, "");
 
-      const res = await fetch(`${API_BASE}/api/emails/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: forwardTo.trim(),
-          subject: `Fwd: ${email.subject}`,
-          message: message.trim() || `Forwarded email: ${email.subject}`,
-        }),
-      });
+      const res = await fetch(
+        `${API_BASE}/api/emails/forward/${email.resendId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: forwardTo.trim(),
+            ...(message.trim() ? { message: message.trim() } : {}),
+          }),
+        },
+      );
 
       if (!res.ok) {
         const json = await res.json();
@@ -127,6 +129,14 @@ export const EmailForwardDialog = ({
             />
           </div>
 
+          {!email?.resendId && (
+            <div className="border-destructive bg-destructive/10 rounded-lg border p-3">
+              <p className="text-destructive text-sm">
+                This email cannot be forwarded (missing email ID).
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="border-destructive bg-destructive/10 rounded-lg border p-3">
               <p className="text-destructive text-sm">{error}</p>
@@ -150,8 +160,11 @@ export const EmailForwardDialog = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || success}>
-              {loading ? "Sending..." : "Forward"}
+            <Button
+              type="submit"
+              disabled={loading || success || !email?.resendId}
+            >
+              {loading ? "Forwarding..." : "Forward"}
               {!loading && <IconChevronRight className="ml-1" />}
             </Button>
           </div>
