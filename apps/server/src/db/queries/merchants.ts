@@ -1,5 +1,5 @@
 import { db, merchant } from "@vortile/database";
-import { eq } from "drizzle-orm";
+import { eq } from "@vortile/database";
 
 export const getMerchantByClerkId = (clerkId: string) =>
   db.query.merchant.findFirst({

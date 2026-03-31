@@ -7,7 +7,7 @@ import {
 import { getWabaByProviderAccountId } from "../../db/queries/waba.queries";
 import { createMerchant } from "../../db/mutations/merchants.mutations";
 import { db, waba } from "@vortile/database";
-import { eq } from "drizzle-orm";
+import { eq } from "@vortile/database";
 
 /**
  * Gupshup Partner API Types
