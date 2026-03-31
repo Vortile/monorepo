@@ -20,6 +20,7 @@ app.use(
 );
 
 // Routes
+app.get("/", (c) => c.json({ status: "ok", service: "vortile-api" }));
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 app.route("/api/waba", wabaRoute);
 app.route("/api/waba/onboarding", wabaOnboardingRoute);
