@@ -1,3 +1,1 @@
-import { v7 as uuidv7 } from "uuid";
-
-export const generateId = () => uuidv7();
+export const generateId = () => crypto.randomUUID();

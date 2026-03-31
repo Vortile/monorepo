@@ -26,11 +26,9 @@ export const getEmails = async (
   limit: number = 10,
   direction?: "received" | "sent",
 ) => {
-  const query = db.select().from(email);
-
-  if (direction) {
-    query.where(eq(email.direction, direction));
-  }
+  const query = direction
+    ? db.select().from(email).where(eq(email.direction, direction))
+    : db.select().from(email);
 
   return await query.orderBy(desc(email.resendCreatedAt)).limit(limit);
 };
