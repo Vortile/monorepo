@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { IconChevronRight, IconLoader } from "@tabler/icons-react";
+import { IconChevronRight, IconLoader, IconPaperclip, IconX } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+interface AttachmentFile {
+  filename: string;
+  content: string; // base64
+  contentType: string;
+  size: number;
+}
+
 const ComposePage = () => {
   const router = useRouter();
   const { user } = useUser();
@@ -24,15 +31,54 @@ const ComposePage = () => {
   const [to, setTo] = React.useState("");
   const [subject, setSubject] = React.useState("");
   const [message, setMessage] = React.useState("");
+  const [attachments, setAttachments] = React.useState<AttachmentFile[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress) {
       setFrom(user.primaryEmailAddress.emailAddress);
     }
   }, [user]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    const newAttachments = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<AttachmentFile>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const base64 = (reader.result as string).split(",")[1];
+              resolve({
+                filename: file.name,
+                content: base64,
+                contentType: file.type || "application/octet-stream",
+                size: file.size,
+              });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (index: number) =>
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +102,11 @@ const ComposePage = () => {
           to: to.trim(),
           subject: subject.trim(),
           message: message.trim(),
+          attachments: attachments.map(({ filename, content, contentType }) => ({
+            filename,
+            content,
+            contentType,
+          })),
         }),
       });
 
@@ -144,6 +195,53 @@ const ComposePage = () => {
                 required
                 disabled={loading || success}
                 rows={10}
+              />
+            </div>
+
+            {/* Attachments */}
+            <div className="space-y-2">
+              <Label>Attachments</Label>
+              {attachments.length > 0 && (
+                <div className="space-y-2">
+                  {attachments.map((att, i) => (
+                    <div
+                      key={i}
+                      className="bg-muted/40 flex items-center justify-between rounded-md border px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{att.filename}</p>
+                        <p className="text-muted-foreground text-xs">{formatBytes(att.size)}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2 h-7 w-7 shrink-0"
+                        onClick={() => removeAttachment(i)}
+                        disabled={loading || success}
+                      >
+                        <IconX className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading || success}
+              >
+                <IconPaperclip className="mr-2 h-4 w-4" />
+                Add attachment
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
               />
             </div>
 
