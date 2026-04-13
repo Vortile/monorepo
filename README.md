@@ -65,7 +65,14 @@ pnpm dev:admin
 
 **Shared Drizzle ORM Package**
 
-Centralized database schema definitions and utilities using Drizzle ORM with Neon (Serverless Postgres).
+Centralized database schema definitions and utilities using Drizzle ORM with Supabase (Postgres).
+
+**Connection Setup (Supabase):**
+
+Two env vars are required — get both from Supabase Dashboard → Project Settings → Database:
+
+- `DATABASE_URL` — Transaction pooler (port `6543`). Used by the app at runtime. Required in production/Vercel.
+- `DIRECT_URL` — Direct connection (port `5432`). Used **only** by `drizzle-kit` for push/migrate. Never use the pooler for schema migrations.
 
 **Schema Organization:**
 
@@ -107,7 +114,7 @@ pnpm db:push      # Push schema to database
 - **Package Manager**: pnpm (workspaces) + Turborepo
 - **Backend**: Hono.js, TypeScript
 - **Frontend**: Next.js 16 (App Router), shadcn/ui
-- **Database**: Neon (Serverless Postgres) + Drizzle ORM
+- **Database**: Supabase (Postgres) + Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **Linting**: ESLint (root `eslint.config.mjs`)
 - **Formatting**: Prettier with Tailwind plugin
